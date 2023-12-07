@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>AeroMart User Registration</h3>
+
+<div id="example1">
+
+<h1>My first PHP page</h1>
+<script language="php">
+
+$mysqli = new mysqli("localhost", "root", "VanessaH1ne123!", "aeromart");
+$query = "SHOW TABLES";
+if ($result = $mysqli->query($query)) {
+  while ($row = $result->fetch_row()) {
+    printf("%s <br />\n", $row[0]);
+  }
+$result->close();
+}
+$mysqli->close();
+phpinfo();
+
+</script>
+
+</div>
+
+</body>
+</html>
+
+
