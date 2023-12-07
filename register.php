@@ -1,3 +1,9 @@
+<?php  
+
+include 'database.php';
+
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -62,18 +68,7 @@
   </div>
 </section>
 
-<?php  
 
-include 'database.php';
-include 'login.php';
-
-$i = 1; 
-  echo"the first 10 natural numbers are:"; 
-  for($i = 1; $i <= 10; $i++) { 
-    echo $i; 
-	
-  } 
-?>
 
 
 </body>

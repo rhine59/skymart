@@ -1,100 +1,121 @@
-<?php
-include 'lib/library.php';
-include 'lib/database_connection.php';
- 
-$login_error_message = '';
-$register_error_message = '';
-$register_success_message = '';
-$app = '';
- 
-// check Register request
-if (!empty($_POST['btnRegister'])) {
-    // validated user input
-    if ($_POST['first_name'] == "") {
-        $register_error_message = 'First name field is required!';
-    } else if ($_POST['last_name'] == "") {
-        $register_error_message = 'Last name field is required!';
-    } else if ($_POST['email'] == "") {
-        $register_error_message = 'Email field is required!';
-    } else if ($_POST['password'] == "") {
-        $register_error_message = 'Password field is required!';
-    } else if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-        $register_error_message = 'Invalid email address!';
-    } else if ($app->isEmail($_POST['email'])) {
-        $register_error_message = 'Email is already in use!';
-    } else {
-        if ($app->Register($_POST['first_name'], $_POST['last_name'], $_POST['email'], $_POST['password'])) {
-            // show success message and ask user to check email for verification link
-            $register_success_message = 'Your account is created successfully, please check your email for verification link to activate your account.';
-        }
+<?php  
+
+include 'database.php';
+
+
+
+$op = $_POST['op'];
+$userid = $_POST['userid'];
+$password = $_POST['password'];
+
+echo "<br><br>op: $op  userid: $userid  password: $password";
+
+if ($op=="login")
+{
+    // $sql = "SELECT name FROM users WHERE name='$userid' AND PASSWORD('$password') = password";
+
+    
+    $sql = "SELECT name FROM users WHERE name='$userid'";
+
+    $result = mysqli_query($link,$sql);
+
+    // FAILED LOGIN
+    if (mysqli_num_rows($result)==0)
+    {
+         echo "<p>Nothing found here</p>";
+         $failed=1;
     }
+
+    // SUCCESS LOGIN
+    else
+    {
+        echo "<p>Found! Login OK!</p>";
+        $row = $result->fetch_row();
+
+        $db_id = $row[0];
+        $db_name = $row[1];
+
+        echo "<br><br>ID: $db_id  Name: $db_name";
+
+        setcookie("auth_id","$db_id");
+        setcookie("auth_email","$email");
+
+        //echo "Success! Cookie value: " . $_COOKIE['auth_id'];
+        header("Location:private.php");
+
+        exit;
+    }
+
+
+
 }
+
+
 ?>
-<!doctype html>
-<html lang="en">
+
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Home</title>
-    <link rel="stylesheet" href="lib/bootstrap-4.4.1-dist/css/bootstrap.min.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Skymart - Login or Register</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+        rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+        crossorigin="anonymous">
+	<link rel="stylesheet" href="register.css">
 </head>
 <body>
- 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h2>
-                SkyMart user Registration and Login
-            </h2>
+  <section class="vh-100 bg-image" style="background-image: url('images/selling.jpg');">
+  <div class="mask d-flex align-items-center h-100 gradient-custom-3">
+    <div class="container h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+          <div class="card" style="border-radius: 15px;">
+            <div class="card-body p-5">
+              <h2 class="text-center mb-5">SkyMart Login</h2>
+
+              <form method=POST action="index.php">
+
+                <div class="form-outline mb-4">
+                  <input type="text" id="id-index-1" class="form-control form-control-lg" required name="userid"/>
+                  <label class="form-label" for="label-userid">User ID</label>
+                </div>
+                <div class="form-outline mb-4">
+                  <input type="password" id="id-index-2" class="form-control form-control-lg" required name="password"/>
+                  <label class="form-label" for="label-userid">Password</label>
+                </div>
+                <div class="form-check d-flex justify-content-center mb-5">
+                  <input class="form-check-input me-2" type="checkbox" value="" id="id-index-3"/>
+                  <label class="form-check-label" for="label-userid">
+                    I agree to the <a href="#!" class="text-body"><u>Terms of service</u></a>
+                  </label>
+                </div>
+
+                <div class="d-flex justify-content-center">
+                  <button type="submit" name="op" value="login"
+                    class="btn btn-success btn-block mb-lg-1">Login
+                  </button>
+                </div>
+                
+                <br>
+                <div class="d-flex justify-content-center">
+                  <button type="submit" name="op" value="register"
+                    class="btn btn-warning btn-block mb-lg-1">Register
+                  </button>
+                </div>
+                
+              </form>
+
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-    <div class="row">
-        <div class="col-md-5 well">
-            <br>
-            <h4>Register</h4>
- 
-            <form action="index.php" method="post">
-                <div class="form-group">
-                    <label for="">First Name</label>
-                    <input type="text" name="first_name" class="form-control" placeholder="First Name"/>
-                </div>
-                <div class="form-group">
-                    <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last Name"/>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="text" id="email" name="email" class="form-control" placeholder="Email Address"/>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Password"/>
-                </div>
-                <div class="form-group">
-                    <input type="submit" name="btnRegister" class="btn btn-primary" value="Register"/>
-                </div>
-            </form>
-        </div>
-        <div class="col-md-2"></div>
-        <div class="col-md-5 well">
-            <br>
-            <h4>Login</h4>
- 
-            <form action="index.php" method="post">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Email Address"/>
-                </div>
-                <div class="form-group">
-                    <label for="">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Password"/>
-                </div>
-                <div class="form-group">
-                    <input type="submit" name="btnLogin" class="btn btn-primary" value="Login"/>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
- 
+  </div>
+</section>
+
+
+
+
 </body>
 </html>
