@@ -1,25 +1,15 @@
 # SkyMart architecture
 
-## Phase 2 baseline
+## Supported baseline
 
-SkyMart remains a small server-rendered PHP application backed by MySQL/MariaDB. This keeps deployment simple on the Synology while the marketplace domain is established.
+SkyMart is a server-rendered PHP 8.4 application on Apache 2.4, backed by MariaDB 11.4 LTS/InnoDB/utf8mb4 and deployed with Docker Compose.
 
-### Request flow
+Browser -> HTTPS Synology reverse proxy -> PHP 8.4/Apache container -> private Docker network -> MariaDB 11.4.
 
-Browser -> HTTPS reverse proxy/web server -> PHP -> MySQL/MariaDB.
+Apache exposes only `/var/www/skymart/public`. Application code, configuration, migrations and documentation live outside the document root and cannot be requested directly.
 
-`bootstrap.php` owns session startup and common dependencies. `database.php` owns database connectivity. `lib/security.php` owns escaping, CSRF and authentication guards.
+`bootstrap.php` owns session startup and common dependencies. `database.php` owns database connectivity. `lib/security.php` owns escaping, CSRF and authentication guards. Forwarded HTTPS is trusted only when `SKYMART_TRUST_PROXY=1`, which is intended for the production Synology reverse proxy.
 
-### Authentication
+Authentication uses server-side PHP sessions, strict cookie mode, HttpOnly and SameSite=Lax. Secure cookies are enabled for direct HTTPS or the explicitly trusted HTTPS proxy. Successful login regenerates the session ID. Passwords use `password_hash(PASSWORD_DEFAULT)` and `password_verify()`.
 
-Identity is held server-side in the PHP session. Session identifiers use cookies only, strict mode, HttpOnly and SameSite=Lax. Secure cookies are enabled automatically when HTTPS is detected. Successful login regenerates the session ID.
-
-Passwords are stored using `password_hash(PASSWORD_DEFAULT)` and checked using `password_verify()`.
-
-### Database
-
-Schema changes live in `migrations/`. Phase 2 introduces users, categories and the initial listings table. Production schema changes must be applied explicitly and backed up first.
-
-### Next boundary
-
-Phase 3 should separate marketplace concerns into small application modules for listings, images, profiles, favourites and moderation rather than returning to one-file prototypes.
+Schema changes live in `migrations/`. Phase 3 should place marketplace concerns in `src/` modules for listings, images, profiles, favourites and moderation while keeping public entry points thin. A SPA, microservices, Redis and dedicated search service are deliberately deferred until requirements justify them.
