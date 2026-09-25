@@ -2,8 +2,9 @@
 set -eu
 cd "$(dirname "$0")/.."
 export SKYMART_TEST_PORT="${SKYMART_TEST_PORT:-18080}"
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.test.yml"
-cleanup(){ $COMPOSE down -v --remove-orphans >/dev/null 2>&1 || true; };trap cleanup EXIT INT TERM
+COMPOSE="docker compose -p skymart-test -f docker-compose.yml -f docker-compose.test.yml"
+cleanup(){ $COMPOSE down -v --remove-orphans >/dev/null 2>&1 || true; }
+trap cleanup EXIT INT TERM
 echo "==> Building isolated test stack";cleanup;$COMPOSE build --pull;$COMPOSE up -d
 echo "==> Waiting for application";i=0
 until curl -fsS "http://127.0.0.1:$SKYMART_TEST_PORT/health.php" >/dev/null;do i=$((i+1));[ "$i" -ge 60 ]&&{$COMPOSE ps;$COMPOSE logs --tail=150;exit 1;};sleep 2;done
