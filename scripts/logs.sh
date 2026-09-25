@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
-docker compose logs -f --tail=200 "${@:-}"
+if [ "$#" -gt 0 ]; then docker compose logs -f --tail=200 "$@"; else docker compose logs -f --tail=200; fi
