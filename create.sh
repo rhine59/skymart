@@ -1,14 +1,6 @@
-<?php
-$mysqli = new mysqli("localhost", "root", "VanessaH1ne123!", "aeromart");
-
-$query = "SHOW TABLES";
-if ($result = $mysqli->query($query)) {
-    while ($row = $result->fetch_row()) {
-        printf("%s <br />\n", $row[0]);
-    }
-    $result->close();
-}
-
-$mysqli->close();
-
-?>
+#!/bin/sh
+# Legacy database inspection helper.
+# Credentials are intentionally not stored here.
+# Use the mysql client with credentials supplied securely by your environment.
+echo "Legacy helper disabled: configure database access via environment variables."
+exit 1
