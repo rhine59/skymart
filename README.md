@@ -1,44 +1,51 @@
 # SkyMart
 
-SkyMart is an aviation-focused marketplace project for buying and selling aircraft, avionics, instruments, parts and related equipment.
+SkyMart is an aviation-focused marketplace for buying and selling aircraft, avionics, instruments, parts and related equipment.
 
-## Status
+## Current status
 
-The repository is being converted from an early PHP/MySQL prototype into a maintainable application. The current code must be treated as development software, not production-ready.
+Phase 2 establishes the secure application foundation: environment-based configuration, server-side sessions, CSRF protection, prepared SQL, modern password hashing, secure registration/logout and versioned database migrations.
 
-## Security baseline
+The marketplace UI itself begins in Phase 3.
 
-- Database credentials are supplied through environment variables and must never be committed.
-- Login uses parameterised SQL and PHP password verification.
-- Authentication state should use PHP sessions rather than client-controlled identity cookies.
-- Production must use HTTPS.
-- Errors must be logged server-side without exposing database details to users.
-- All database operations must use prepared statements.
-- Passwords for new/reset accounts must use `password_hash()`.
+## Requirements
 
-Required environment variables:
+- PHP 8.1+ with mysqli and mbstring
+- MySQL 8+ or a compatible MariaDB release
+- HTTPS for production
 
-```
-SKYMART_DB_HOST=localhost
-SKYMART_DB_NAME=skymart
-SKYMART_DB_USER=...
-SKYMART_DB_PASSWORD=...
-```
+## Configuration
 
-## Important credential-rotation notice
+Copy the variable names from `.env.example` into the environment used by PHP. Do not put production secrets in a web-accessible file or commit them.
 
-Credentials previously existed in repository history. Any database passwords that have ever been committed must be considered compromised and rotated. Removing them from the current branch does not remove them from Git history.
+Required variables: `SKYMART_DB_HOST`, `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD`.
 
-## Current cleanup
+## Database
 
-The repository still contains legacy prototype pages. These are retained temporarily for reference while the application is rebuilt. They must not be exposed by a production web server.
+Apply `migrations/001_initial.sql` to a new development database. Back up an existing database before attempting any migration.
 
-## Next development stages
+Legacy prototype password hashes are intentionally not supported. Existing prototype users should reset/recreate their passwords.
 
-1. Complete secure account registration and password migration/reset.
-2. Add a single authentication/session layer and logout.
-3. Establish database migrations/schema.
-4. Build listings, categories, images and seller profiles.
-5. Add search/filtering and advert management.
-6. Add automated security and application tests.
-7. Containerise deployment for development and Synology hosting.
+## Security
+
+The active application uses PHP `password_hash()` / `password_verify()`, prepared statements, server-side session identity and CSRF tokens. PHP documents `PASSWORD_DEFAULT` hashes as self-describing and recommends allowing a password column to grow to 255 bytes.
+
+Credentials previously committed to Git history must be rotated even though they have been removed from the active tree.
+
+See `docs/SECURITY.md` and `docs/ARCHITECTURE.md`.
+
+## Repository layout
+
+- `index.php` - login
+- `register.php` - registration
+- `private.php` - authenticated account landing page
+- `logout.php` - secure logout endpoint
+- `bootstrap.php` - common application/session bootstrap
+- `database.php` - environment-based DB connection
+- `lib/` - shared application helpers
+- `migrations/` - versioned schema
+- `docs/` - architecture, security and feature status
+
+## Next
+
+Phase 3 will implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.
