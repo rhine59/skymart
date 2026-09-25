@@ -2,66 +2,32 @@
 
 SkyMart is an aviation-focused marketplace for buying and selling aircraft, avionics, instruments, parts and related equipment.
 
-## Current status
+## Technology baseline
 
-Phase 2 establishes the secure application foundation: environment-based configuration, server-side sessions, CSRF protection, prepared SQL, modern password hashing, secure registration/logout and versioned database migrations.
+- PHP 8.4 + Apache 2.4
+- MariaDB 11.4 LTS, InnoDB and utf8mb4
+- mysqli prepared statements
+- Server-side PHP sessions and password_hash()/password_verify()
+- Server-rendered HTML + Bootstrap with selective JavaScript
+- Docker Compose for Mac development/test and Synology deployment
+- Synology reverse proxy for production HTTPS
 
-The marketplace UI itself begins in Phase 3.
+Apache exposes only the `public/` directory. Application internals, migrations and configuration remain outside the web document root.
 
-## Requirements
+## Phase 2
 
-- PHP 8.1+ with mysqli and mbstring
-- MySQL 8+ or a compatible MariaDB release
-- HTTPS for production
+Phase 2 establishes environment-based configuration, server-side sessions, CSRF protection, prepared SQL, modern password hashing, registration/logout, versioned database migrations and a reproducible Docker environment.
 
 ## Configuration
 
-Copy the variable names from `.env.example` into the environment used by PHP. Do not put production secrets in a web-accessible file or commit them.
+Required application variables: `SKYMART_DB_HOST`, `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD`. Production Compose additionally requires `SKYMART_DB_ROOT_PASSWORD`. Never commit production secrets.
 
-Required variables: `SKYMART_DB_HOST`, `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD`.
+Legacy prototype password hashes are intentionally unsupported. Historical database credentials previously committed to Git must be rotated.
 
-## Database
-
-Apply `migrations/001_initial.sql` to a new development database. Back up an existing database before attempting any migration.
-
-Legacy prototype password hashes are intentionally not supported. Existing prototype users should reset/recreate their passwords.
-
-## Security
-
-The active application uses PHP `password_hash()` / `password_verify()`, prepared statements, server-side session identity and CSRF tokens. PHP documents `PASSWORD_DEFAULT` hashes as self-describing and recommends allowing a password column to grow to 255 bytes.
-
-Credentials previously committed to Git history must be rotated even though they have been removed from the active tree.
-
-See `docs/SECURITY.md` and `docs/ARCHITECTURE.md`.
-
-## Repository layout
-
-- `index.php` - login
-- `register.php` - registration
-- `private.php` - authenticated account landing page
-- `logout.php` - secure logout endpoint
-- `bootstrap.php` - common application/session bootstrap
-- `database.php` - environment-based DB connection
-- `lib/` - shared application helpers
-- `migrations/` - versioned schema
-- `docs/` - architecture, security and feature status
-
-## Next
-
-Phase 3 will implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.
-
-
-## Docker development
-
-Build/start the development stack:
+## Development and test
 
 ```sh
 ./scripts/rebuild.sh
-```
-
-Run the isolated automated test harness:
-
-```sh
 ./scripts/test.sh
 ```
 
@@ -73,4 +39,17 @@ Useful operations:
 ./scripts/reset-db.sh
 ```
 
-See `docs/DOCKER.md` for the container architecture, test behaviour and Synology notes.
+See `docs/DOCKER.md`, `docs/SECURITY.md`, `docs/ARCHITECTURE.md` and `docs/FEATURE-STATUS.md`.
+
+## Repository layout
+
+- `public/` — the only web-accessible document root
+- `bootstrap.php` — session/application bootstrap
+- `database.php` — environment-based DB connection
+- `lib/` — shared application helpers
+- `migrations/` — versioned schema
+- `docker/` — Apache/container configuration
+- `scripts/` — build, test and operations scripts
+- `docs/` — architecture, security and operational documentation
+
+Phase 3 will introduce `src/` application modules and implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.
