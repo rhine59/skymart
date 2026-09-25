@@ -49,3 +49,28 @@ See `docs/SECURITY.md` and `docs/ARCHITECTURE.md`.
 ## Next
 
 Phase 3 will implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.
+
+
+## Docker development
+
+Build/start the development stack:
+
+```sh
+./scripts/rebuild.sh
+```
+
+Run the isolated automated test harness:
+
+```sh
+./scripts/test.sh
+```
+
+Useful operations:
+
+```sh
+./scripts/status.sh
+./scripts/logs.sh
+./scripts/reset-db.sh
+```
+
+See `docs/DOCKER.md` for the container architecture, test behaviour and Synology notes.
