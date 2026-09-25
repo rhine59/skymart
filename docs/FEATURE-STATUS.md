@@ -14,4 +14,4 @@
 | Search/filter | Not started | Phase 3 |
 | Favourites | Not started | Later |
 | Moderation/reporting | Not started | Later |
-| Automated test harness | Not started | Next |
+| Docker development environment | Implemented | PHP 8.3/Apache + MariaDB 11.4 |\n| Automated test harness | Implemented — execution pending | Syntax, schema, registration and auth smoke tests |
