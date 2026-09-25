@@ -1,0 +1,22 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.local
+config.local.php
+secrets/
+*.pem
+*.key
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Runtime/logs
+*.log
+tmp/
+cache/
+
+# Dependencies
+vendor/
