@@ -11,3 +11,8 @@
 - Added initial users/categories/listings migration.
 - Added environment example and architecture/security/feature documentation.
 - Removed legacy prototype and credential-bearing files from the active tree.
+
+- Added PHP/Apache and MariaDB Docker Compose environment.
+- Added isolated Docker test override and health endpoint.
+- Added rebuild, reset, status, logs and automated test scripts.
+- Added Docker/Synology operating documentation.
