@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: skymart
+      MARIADB_USER: skymart
+      MARIADB_PASSWORD: skymart-dev-only
+      MARIADB_ROOT_PASSWORD: skymart-root-dev-only
+    volumes:
+      - skymart-db:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SKYMART_DB_HOST: db
+      SKYMART_DB_NAME: skymart
+      SKYMART_DB_USER: skymart
+      SKYMART_DB_PASSWORD: skymart-dev-only
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${SKYMART_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/health.php"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  skymart-db:
