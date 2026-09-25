@@ -1,53 +1,41 @@
-# Docker development and test environment
+# Docker development, test and production
 
-## Services
+The baseline is PHP 8.4 + Apache and MariaDB 11.4 LTS. Apache serves only `public/`; PHP application internals remain outside the web document root.
 
-The stack contains two containers:
-
-- `web`: PHP 8.3 + Apache with mysqli.
-- `db`: MariaDB 11.4 with a persistent Docker volume.
-
-The normal development site is exposed on port 8080 by default. Set `SKYMART_PORT` to override it.
-
-## Build and start
-
-```sh
-docker compose up -d --build
-```
-
-or use:
+## Development
 
 ```sh
 ./scripts/rebuild.sh
 ```
 
-The rebuild script stops the existing stack, pulls/rebuilds images without build cache, starts the services and waits for the health endpoint.
+The development site uses port 8080 by default. Set `SKYMART_PORT` to override it.
 
-## Tests
+## Automated test
 
 ```sh
 ./scripts/test.sh
 ```
 
-Tests use the Compose test override, bind only to localhost on port 18080 and use a temporary MariaDB filesystem. The test stack is destroyed automatically.
-
-The harness checks container startup/health, PHP syntax, database migrations and seed categories, secure registration, database persistence of the test user, and rejection of unauthenticated access to the private page.
-
-## Reset development database
-
-```sh
-./scripts/reset-db.sh
-```
-
-This is destructive and removes the local Docker database volume.
+The isolated test override binds to localhost on port 18080 and uses temporary MariaDB storage. It verifies PHP 8.4+, PHP syntax, migrations, seed data, public-root isolation, registration and unauthenticated access control, then destroys the test stack.
 
 ## Operations
 
 ```sh
 ./scripts/status.sh
 ./scripts/logs.sh
+./scripts/reset-db.sh
 ```
 
-## Synology
+The reset command destroys the development database volume.
 
-The same Compose stack is suitable as the starting point for Synology Container Manager. Production deployment should use separate strong secrets, no direct database port exposure, HTTPS through the Synology reverse proxy, backups for the MariaDB volume, and a pinned/tested image update process.
+## Synology production
+
+Use the production override:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+Set `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD` and `SKYMART_DB_ROOT_PASSWORD` in the Synology deployment environment. Do not commit them.
+
+The production override binds the web service to loopback by default and enables trusted-proxy HTTPS detection for the Synology reverse proxy. MariaDB has no published host port. Configure the Synology reverse proxy for HTTPS, back up the database volume, and test image upgrades before production deployment.
