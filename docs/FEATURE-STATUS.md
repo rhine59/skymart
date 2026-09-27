@@ -25,3 +25,16 @@
 - Web administrator users console: implemented at `/admin/users.php`, guarded by active admin role and CSRF for state changes.
 - Production iOS API origin: configuration pending; placeholder origin must be replaced before deployment.
 - Password-reset mail transport: deployment configuration pending.
+
+## iOS advert publishing and photographs
+
+- Native PhotosPicker selection: implemented, maximum 10 images.
+- Local selected-photo preview/removal: implemented.
+- JPEG conversion before upload: implemented.
+- Authenticated real advert creation: implemented.
+- Stable server listing ID retained in the Swift model.
+- Sequential authenticated image upload with progress: implemented.
+- API advert gallery decoding and swipeable detail gallery: implemented.
+- Image reordering after upload: pending.
+- Upload retry/resume and per-image failure recovery: pending.
+- Full Xcode/device build and Docker integration execution: pending; implementation status must not be interpreted as tested status.
