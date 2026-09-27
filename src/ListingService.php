@@ -122,6 +122,12 @@ final class ListingService
         return (int)$row['id'];
     }
 
+    private function images(int $listingId): array
+    {
+        $s=$this->db->prepare('SELECT id,storage_key,width,height,sort_order FROM listing_images WHERE listing_id=? ORDER BY sort_order,id');$s->bind_param('i',$listingId);$s->execute();$out=[];
+        foreach($s->get_result()->fetch_all(MYSQLI_ASSOC) as $i)$out[]=['id'=>(int)$i['id'],'url'=>"/media/listings/$listingId/{$i['storage_key']}.jpg",'thumbnail_url'=>"/media/listings/$listingId/{$i['storage_key']}-thumb.jpg",'width'=>(int)$i['width'],'height'=>(int)$i['height'],'sort_order'=>(int)$i['sort_order']];return $out;
+    }
+
     private function shape(array $r): array
     {
         return [
@@ -130,7 +136,7 @@ final class ListingService
             'price_gbp'=>$r['price_gbp'] === null ? null : (float)$r['price_gbp'],
             'location'=>$r['location'],'description'=>$r['description'],'status'=>$r['status'],
             'seller'=>['id'=>(int)$r['seller_id'],'name'=>$r['seller_name']],
-            'images'=>[],'created_at'=>$r['created_at'],'expires_at'=>$r['expires_at']
+            'images'=>$this->images((int)$r['id']),'created_at'=>$r['created_at'],'expires_at'=>$r['expires_at']
         ];
     }
 }
