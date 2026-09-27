@@ -5,7 +5,7 @@ final class AuthService {
  public function __construct(private mysqli $db) {}
 
  public function login(string $email,string $password,string $label='iPhone'): ?array {
-  $stmt=$this->db->prepare('SELECT id,name,email,password FROM users WHERE email=? LIMIT 1');
+  $stmt=$this->db->prepare('SELECT id,name,email,password FROM users WHERE email=? AND status='active' LIMIT 1');
   $stmt->bind_param('s',$email);$stmt->execute();$user=$stmt->get_result()->fetch_assoc();
   if (!$user || !password_verify($password,$user['password'])) return null;
   if (password_needs_rehash($user['password'],PASSWORD_DEFAULT)) {
@@ -23,7 +23,7 @@ final class AuthService {
  public function authenticate(string $token): ?array {
   if (!preg_match('/^[a-f0-9]{64}$/',$token)) return null;
   $hash=hash('sha256',$token,true);
-  $stmt=$this->db->prepare('SELECT t.id token_id,u.id,u.name,u.email FROM api_tokens t JOIN users u ON u.id=t.user_id WHERE t.token_hash=? AND t.revoked_at IS NULL AND t.expires_at>UTC_TIMESTAMP() LIMIT 1');
+  $stmt=$this->db->prepare('SELECT t.id token_id,u.id,u.name,u.email FROM api_tokens t JOIN users u ON u.id=t.user_id WHERE t.token_hash=? AND u.status='active' AND t.revoked_at IS NULL AND t.expires_at>UTC_TIMESTAMP() LIMIT 1');
   $stmt->bind_param('b',$hash);$stmt->send_long_data(0,$hash);$stmt->execute();$row=$stmt->get_result()->fetch_assoc();
   if (!$row) return null;
   $touch=$this->db->prepare('UPDATE api_tokens SET last_used_at=UTC_TIMESTAMP() WHERE id=? AND (last_used_at IS NULL OR last_used_at<UTC_TIMESTAMP()-INTERVAL 1 HOUR)');
