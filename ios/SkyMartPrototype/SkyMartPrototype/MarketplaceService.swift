@@ -8,6 +8,8 @@ protocol AuthenticationService {
     func login(email: String, password: String, deviceName: String) async throws -> APIUser
     func currentUser() async throws -> APIUser
     func logout() async throws
+    func requestPasswordReset(email: String) async throws
+    func changePassword(current: String, new: String) async throws
 }
 
 struct APIUser: Codable, Equatable {
@@ -59,6 +61,19 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
         return try JSONDecoder().decode(UserEnvelope.self,from:data).data
     }
 
+    func requestPasswordReset(email:String) async throws {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/auth/password-reset/request"));request.httpMethod="POST"
+        request.setValue("application/json",forHTTPHeaderField:"Content-Type");request.httpBody=try JSONEncoder().encode(ResetRequest(email:email))
+        _=try await send(request,authenticated:false)
+    }
+
+    func changePassword(current:String,new:String) async throws {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/me/password"));request.httpMethod="POST"
+        request.setValue("application/json",forHTTPHeaderField:"Content-Type");request.httpBody=try JSONEncoder().encode(ChangePasswordRequest(current_password:current,new_password:new))
+        defer { tokens.clear() }
+        _=try await send(request,authenticated:true)
+    }
+
     func logout() async throws {
         var request=URLRequest(url:baseURL.appending(path:"api/v1/auth/logout"));request.httpMethod="POST"
         defer { tokens.clear() }
@@ -80,6 +95,8 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
 }
 
 enum APIError: Error { case notAuthenticated; case http(Int) }
+private struct ResetRequest:Encodable { let email:String }
+private struct ChangePasswordRequest:Encodable { let current_password:String;let new_password:String }
 private struct LoginRequest:Encodable { let email:String;let password:String;let device_name:String }
 private struct LoginEnvelope:Decodable { let data:LoginData }
 private struct LoginData:Decodable { let token:String;let expires_at:String;let user:APIUser }
