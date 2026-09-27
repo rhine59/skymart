@@ -69,10 +69,14 @@ Create/update JSON fields:
 
 Ownership failures deliberately return 404 rather than revealing another seller's private advert state.
 
-## Authentication and marketplace endpoints still planned
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/me`
+## Mobile authentication
+- `POST /api/v1/auth/login` accepts email, password and optional `device_name`; returns an opaque bearer token, expiry and user.
+- `GET /api/v1/me` validates the bearer token and returns the user.
+- `POST /api/v1/auth/logout` revokes the current bearer token.
+
+Tokens are 256-bit random values, expire after 30 days, and only SHA-256 token hashes are stored in MariaDB. The iOS client stores the raw token in Keychain using a device-only accessibility class.
+
+## Marketplace endpoints still planned
 - `POST /api/v1/listings/{id}/favourite`
 - `DELETE /api/v1/listings/{id}/favourite`
 - `GET /api/v1/favourites`
