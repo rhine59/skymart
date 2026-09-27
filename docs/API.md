@@ -91,3 +91,14 @@ Before the production iPhone app uses write endpoints, SkyMart will add a mobile
 
 ## iOS boundary
 The SwiftUI app consumes protocol `MarketplaceService`. `MockMarketplaceService` is used for simulator development; `APIMarketplaceService` implements this contract with URLSession.
+
+## Listing photographs
+
+Authenticated listing owners can manage photographs:
+
+- `POST /api/v1/listings/{id}/images` with `Content-Type: image/jpeg` and the JPEG bytes as the request body.
+- `DELETE /api/v1/listings/{id}/images/{image_id}`.
+
+Each advert supports up to 10 images. Incoming files are limited to 12 MB and sensible dimensions, decoded and re-encoded by GD so uploaded metadata and original container content are not retained. SkyMart generates a maximum 2000 px display JPEG and 480 px thumbnail. Files use random storage keys outside the public document root and are served through controlled immutable media URLs.
+
+Listing responses now populate `images` with ordered objects containing `id`, `url`, `thumbnail_url`, `width`, `height`, and `sort_order`.
