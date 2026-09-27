@@ -13,6 +13,10 @@ $COMPOSE exec -T web php -r 'if (PHP_VERSION_ID < 80400) { fwrite(STDERR, "PHP 8
 $COMPOSE exec -T web sh -c 'find /var/www/skymart -name "*.php" -type f -print0 | xargs -0 -n1 php -l'
 echo "==> Public-root isolation checks"
 for path in /bootstrap.php /database.php /migrations/001_initial.sql /docs/SECURITY.md;do code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$SKYMART_TEST_PORT$path")";[ "$code" = "404" ]||{ echo "FAIL: internal path $path returned $code";exit 1;};done
+echo "==> Compose exposure check"
+PORTS="$($COMPOSE port web 80)"
+echo "$PORTS" | grep -q "127.0.0.1:$SKYMART_TEST_PORT" || { echo "FAIL: unexpected test port binding: $PORTS"; exit 1; }
+[ "$(echo "$PORTS" | wc -l | tr -d " ")" = "1" ] || { echo "FAIL: multiple test port bindings: $PORTS"; exit 1; }
 echo "==> Database schema checks"
 $COMPOSE exec -T db mariadb -uskymart -pskymart-dev-only skymart -e "SELECT COUNT(*) AS users_table FROM information_schema.tables WHERE table_schema='skymart' AND table_name='users'; SELECT COUNT(*) AS categories FROM categories; SELECT COUNT(*) AS listings_table FROM information_schema.tables WHERE table_schema='skymart' AND table_name='listings';"
 echo "==> HTTP/CSRF/auth smoke test"
