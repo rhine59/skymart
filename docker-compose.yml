@@ -25,6 +25,9 @@ services:
       SKYMART_DB_NAME: skymart
       SKYMART_DB_USER: skymart
       SKYMART_DB_PASSWORD: skymart-dev-only
+      SKYMART_UPLOAD_ROOT: /var/lib/skymart/uploads
+    volumes:
+      - skymart-uploads:/var/lib/skymart/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -39,3 +42,4 @@ services:
 
 volumes:
   skymart-db:
+  skymart-uploads:
