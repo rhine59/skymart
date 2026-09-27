@@ -5,6 +5,8 @@ require_once dirname(__DIR__, 3) . '/bootstrap.php';
 require_once dirname(__DIR__, 3) . '/src/ListingService.php';
 require_once dirname(__DIR__, 3) . '/src/AuthService.php';
 require_once dirname(__DIR__, 3) . '/src/AccountService.php';
+require_once dirname(__DIR__, 3) . '/src/AdminAccountService.php';
+require_once dirname(__DIR__, 3) . '/src/MailService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -38,6 +40,11 @@ function api_identity(AuthService $auth): array {
     api_error('unauthorized','Authentication required.',401);
 }
 function api_user_id(AuthService $auth): int { return (int)api_identity($auth)['id']; }
+function api_admin_id(AuthService $auth,AccountService $accounts): int {
+    $id=api_user_id($auth);$profile=$accounts->profile($id);
+    if(!$profile || $profile['role']!=='admin' || $profile['status']!=='active') api_error('forbidden','Administrator access required.',403);
+    return $id;
+}
 function listing_input(array $body): array {
     $title=trim((string)($body['title'] ?? ''));$description=trim((string)($body['description'] ?? ''));
     $location=trim((string)($body['location'] ?? ''));$category=trim((string)($body['category'] ?? ''));
@@ -61,6 +68,8 @@ $path=trim((string)($_SERVER['PATH_INFO'] ?? ''),'/');
 $service=new ListingService($link);
 $auth=new AuthService($link);
 $accounts=new AccountService($link);
+$adminAccounts=new AdminAccountService($link);
+$mail=new MailService();
 
 if ($method === 'GET' && ($path === '' || $path === 'health')) api_response(['status'=>'ok','api'=>'v1']);
 if ($method === 'GET' && $path === 'categories') api_response(['data'=>$service->categories()]);
@@ -93,7 +102,7 @@ if ($method === 'POST' && $path === 'me/password') {
 }
 if ($method === 'POST' && $path === 'auth/password-reset/request') {
     $body=json_body();$email=mb_strtolower(trim((string)($body['email']??'')));
-    if(filter_var($email,FILTER_VALIDATE_EMAIL))$accounts->issueReset($email);
+    if(filter_var($email,FILTER_VALIDATE_EMAIL)){ $reset=$accounts->issueReset($email); if($reset!==null)$mail->sendPasswordReset($email,$reset); }
     // Always identical response to prevent account enumeration. Delivery is added with the mail service.
     api_response(['data'=>['accepted'=>true]]);
 }
@@ -106,6 +115,19 @@ if ($method === 'DELETE' && $path === 'me') {
     $body=json_body();if(!$accounts->deactivate(api_user_id($auth),(string)($body['password']??'')))api_error('invalid_credentials','Password is incorrect.',401);
     $_SESSION=[];if(session_status()===PHP_SESSION_ACTIVE)session_destroy();
     api_response(['data'=>['deactivated'=>true]]);
+}
+
+if ($method === 'GET' && $path === 'admin/users') {
+    api_admin_id($auth,$accounts);$q=mb_substr(trim((string)($_GET['q']??'')),0,120);api_response(['data'=>$adminAccounts->list($q)]);
+}
+if ($method === 'PATCH' && preg_match('#^admin/users/(\\d+)/status$#',$path,$m)) {
+    $adminId=api_admin_id($auth,$accounts);$target=(int)$m[1];$status=(string)(json_body()['status']??'');
+    if($target===$adminId && $status==='disabled')api_error('validation_error','You cannot disable your own administrator account.',422);
+    if(!$adminAccounts->setStatus($target,$status))api_error('not_found','Account not found or status unchanged.',404);
+    api_response(['data'=>['id'=>$target,'status'=>$status]]);
+}
+if ($method === 'POST' && preg_match('#^admin/users/(\\d+)/revoke-devices$#',$path,$m)) {
+    api_admin_id($auth,$accounts);$adminAccounts->revokeDevices((int)$m[1]);api_response(['data'=>['revoked'=>true]]);
 }
 
 if ($method === 'GET' && $path === 'listings') {
