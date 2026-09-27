@@ -1,8 +1,8 @@
 FROM php:8.4-apache
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends curl libonig-dev \
  && docker-php-ext-install mysqli mbstring \
- && a2enmod rewrite headers
+ && rm -rf /var/lib/apt/lists/* \
+ && a2enmod headers
 COPY docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 WORKDIR /var/www/skymart
 COPY . /var/www/skymart/
