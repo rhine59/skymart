@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 3) . '/src/AuthService.php';
 require_once dirname(__DIR__, 3) . '/src/AccountService.php';
 require_once dirname(__DIR__, 3) . '/src/AdminAccountService.php';
 require_once dirname(__DIR__, 3) . '/src/MailService.php';
+require_once dirname(__DIR__, 3) . '/src/ImageService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -70,6 +71,7 @@ $auth=new AuthService($link);
 $accounts=new AccountService($link);
 $adminAccounts=new AdminAccountService($link);
 $mail=new MailService();
+$images=new ImageService($link,(string)(getenv('SKYMART_UPLOAD_ROOT') ?: '/var/lib/skymart/uploads'));
 
 if ($method === 'GET' && ($path === '' || $path === 'health')) api_response(['status'=>'ok','api'=>'v1']);
 if ($method === 'GET' && $path === 'categories') api_response(['data'=>$service->categories()]);
@@ -152,6 +154,15 @@ if ($method === 'PATCH' && preg_match('#^listings/(\\d+)$#',$path,$m)) {
     catch (InvalidArgumentException) { api_error('validation_error','The request could not be validated.',422,['category'=>'Unknown category.']); }
     if ($listing === null) api_error('not_found','Listing not found.',404);
     api_response(['data'=>$listing]);
+}
+if ($method === 'POST' && preg_match('#^listings/(\\d+)/images$#',$path,$m)) {
+    $type=strtolower(trim(explode(';',(string)($_SERVER['CONTENT_TYPE']??''))[0]));if($type!=='image/jpeg')api_error('unsupported_media_type','Upload a JPEG image.',415);
+    $raw=file_get_contents('php://input');if($raw===false)api_error('invalid_image','Unable to read image.',400);
+    try{$image=$images->addJpeg((int)$m[1],api_user_id($auth),$raw);}catch(InvalidArgumentException $e){api_error('validation_error',$e->getMessage(),422);}catch(RuntimeException $e){if($e->getMessage()==='not_found')api_error('not_found','Listing not found.',404);throw $e;}
+    api_response(['data'=>$image],201);
+}
+if ($method === 'DELETE' && preg_match('#^listings/(\\d+)/images/(\\d+)$#',$path,$m)) {
+    if(!$images->delete((int)$m[2],(int)$m[1],api_user_id($auth)))api_error('not_found','Image not found.',404);api_response(['data'=>['deleted'=>true]]);
 }
 if ($method === 'DELETE' && preg_match('#^listings/(\\d+)$#',$path,$m)) {
     if (!$service->withdrawOwned((int)$m[1],api_user_id($auth))) api_error('not_found','Listing not found.',404);
