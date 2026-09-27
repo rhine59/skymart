@@ -52,17 +52,33 @@ Response:
 ### GET /api/v1/listings/{id}
 Returns one active listing.
 
-## Authenticated endpoints (planned implementation)
-- POST /api/v1/auth/login
-- POST /api/v1/auth/logout
-- GET /api/v1/me
-- POST /api/v1/listings
-- PATCH /api/v1/listings/{id}
-- DELETE /api/v1/listings/{id}
-- POST /api/v1/listings/{id}/favourite
-- DELETE /api/v1/listings/{id}/favourite
-- GET /api/v1/favourites
-- POST /api/v1/listings/{id}/images
+## Authenticated listing endpoints
+These currently reuse the server-side SkyMart session. Unauthenticated requests return HTTP 401.
+
+- `GET /api/v1/me/listings` — seller's adverts, including non-public states.
+- `POST /api/v1/listings` — create and activate an advert.
+- `PATCH /api/v1/listings/{id}` — replace editable fields on an advert owned by the authenticated seller.
+- `DELETE /api/v1/listings/{id}` — withdraw an owned advert; the database row is retained.
+
+Create/update JSON fields:
+- `title` 3–160 characters
+- `description` 10–10,000 characters
+- `category` category slug
+- `price_gbp` non-negative numeric price
+- `location` 1–160 characters
+
+Ownership failures deliberately return 404 rather than revealing another seller's private advert state.
+
+## Authentication and marketplace endpoints still planned
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/me`
+- `POST /api/v1/listings/{id}/favourite`
+- `DELETE /api/v1/listings/{id}/favourite`
+- `GET /api/v1/favourites`
+- `POST /api/v1/listings/{id}/images`
+
+Before the production iPhone app uses write endpoints, SkyMart will add a mobile-safe authentication mechanism. The current session-backed write API is suitable for same-origin integration and backend testing.
 
 ## Error shape
 ```json
