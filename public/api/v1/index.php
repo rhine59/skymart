@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 3) . '/bootstrap.php';
 require_once dirname(__DIR__, 3) . '/src/ListingService.php';
 require_once dirname(__DIR__, 3) . '/src/AuthService.php';
+require_once dirname(__DIR__, 3) . '/src/AccountService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -59,6 +60,7 @@ $method=$_SERVER['REQUEST_METHOD'];
 $path=trim((string)($_SERVER['PATH_INFO'] ?? ''),'/');
 $service=new ListingService($link);
 $auth=new AuthService($link);
+$accounts=new AccountService($link);
 
 if ($method === 'GET' && ($path === '' || $path === 'health')) api_response(['status'=>'ok','api'=>'v1']);
 if ($method === 'GET' && $path === 'categories') api_response(['data'=>$service->categories()]);
@@ -76,6 +78,34 @@ if ($method === 'GET' && $path === 'me') {
 if ($method === 'POST' && $path === 'auth/logout') {
     $identity=api_identity($auth);if ($identity['token_id'] !== null) $auth->revoke((int)$identity['token_id']);
     api_response(['data'=>['logged_out'=>true]]);
+}
+
+if ($method === 'PATCH' && $path === 'me') {
+    $id=api_user_id($auth);$body=json_body();$name=trim((string)($body['name']??''));$phone=trim((string)($body['phone']??''));
+    $fields=[];if($name===''||mb_strlen($name)>120)$fields['name']='Name is required (maximum 120 characters).';if(mb_strlen($phone)>40)$fields['phone']='Maximum 40 characters.';
+    if($fields)api_error('validation_error','The request could not be validated.',422,$fields);
+    api_response(['data'=>$accounts->updateProfile($id,$name,$phone)]);
+}
+if ($method === 'POST' && $path === 'me/password') {
+    $body=json_body();$new=(string)($body['new_password']??'');if(strlen($new)<12)api_error('validation_error','New password must be at least 12 characters.',422);
+    if(!$accounts->changePassword(api_user_id($auth),(string)($body['current_password']??''),$new))api_error('invalid_credentials','Current password is incorrect.',401);
+    api_response(['data'=>['password_changed'=>true,'reauthentication_required'=>true]]);
+}
+if ($method === 'POST' && $path === 'auth/password-reset/request') {
+    $body=json_body();$email=mb_strtolower(trim((string)($body['email']??'')));
+    if(filter_var($email,FILTER_VALIDATE_EMAIL))$accounts->issueReset($email);
+    // Always identical response to prevent account enumeration. Delivery is added with the mail service.
+    api_response(['data'=>['accepted'=>true]]);
+}
+if ($method === 'POST' && $path === 'auth/password-reset/confirm') {
+    $body=json_body();$new=(string)($body['new_password']??'');if(strlen($new)<12)api_error('validation_error','New password must be at least 12 characters.',422);
+    if(!$accounts->resetPassword(strtolower((string)($body['token']??'')),$new))api_error('invalid_or_expired_token','Reset token is invalid or expired.',400);
+    api_response(['data'=>['password_reset'=>true]]);
+}
+if ($method === 'DELETE' && $path === 'me') {
+    $body=json_body();if(!$accounts->deactivate(api_user_id($auth),(string)($body['password']??'')))api_error('invalid_credentials','Password is incorrect.',401);
+    $_SESSION=[];if(session_status()===PHP_SESSION_ACTIVE)session_destroy();
+    api_response(['data'=>['deactivated'=>true]]);
 }
 
 if ($method === 'GET' && $path === 'listings') {
