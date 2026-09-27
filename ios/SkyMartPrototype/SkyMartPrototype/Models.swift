@@ -6,6 +6,8 @@ struct Category: Identifiable, Hashable {
     let symbol: String
 }
 
+struct ListingImage: Hashable { let url: URL; let thumbnailURL: URL }
+
 struct Listing: Identifiable, Hashable {
     let id: UUID
     var title: String
@@ -16,6 +18,7 @@ struct Listing: Identifiable, Hashable {
     var seller: String
     var symbol: String
     var isFavourite: Bool = false
+    var images: [ListingImage] = []
 }
 
 extension Listing {
