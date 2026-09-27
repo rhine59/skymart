@@ -29,3 +29,11 @@ Add rate limiting for login/registration, email verification, password reset, se
 Native authentication uses opaque 256-bit random bearer tokens. Only SHA-256 hashes are persisted in `api_tokens`; raw tokens are returned once at login and stored by iOS in Keychain. Tokens expire after 30 days and are individually revocable on logout. Invalid/expired tokens return HTTP 401. Token last-used timestamps are updated at most hourly to avoid a database write on every request.
 
 Bearer tokens must only be accepted over production HTTPS. Production should add login rate limiting before public release.
+
+## Account lifecycle and administration
+
+Users can update their profile, change their password and deactivate their account. Password changes, password resets, account disabling and deactivation revoke API tokens. Password-reset tokens are random, stored only as SHA-256 hashes, single-use and expire after 30 minutes. Reset-request responses do not reveal whether an email address is registered.
+
+Administrative account operations require an active user with `role=admin` on every request. Administrators can search accounts, disable/re-enable non-deactivated accounts and revoke device tokens. The API prevents an administrator disabling their own account. Existing passwords are never exposed.
+
+Password-reset mail uses `SKYMART_PUBLIC_URL` and `SKYMART_MAIL_FROM`; mail transport must be configured on the production PHP host/container. Production deployment must use an HTTPS public URL and should add login/reset-request rate limiting before public launch.
