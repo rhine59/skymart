@@ -30,7 +30,7 @@ final class AccountService {
   $s=$this->db->prepare('SELECT id,user_id FROM password_reset_tokens WHERE token_hash=? AND used_at IS NULL AND expires_at>UTC_TIMESTAMP() LIMIT 1');
   $s->bind_param('b',$hash);$s->send_long_data(0,$hash);$s->execute();$r=$s->get_result()->fetch_assoc();if(!$r)return false;
   $this->db->begin_transaction();
-  try{$this->setPassword((int)$r['user_id']);$u=$this->db->prepare('UPDATE password_reset_tokens SET used_at=UTC_TIMESTAMP() WHERE id=?');$u->bind_param('i',$r['id']);$u->execute();$this->db->commit();return true;}
+  try{$this->setPassword((int)$r['user_id'],$new);$u=$this->db->prepare('UPDATE password_reset_tokens SET used_at=UTC_TIMESTAMP() WHERE id=?');$u->bind_param('i',$r['id']);$u->execute();$this->db->commit();return true;}
   catch(Throwable $e){$this->db->rollback();throw $e;}
  }
  public function deactivate(int $id,string $password): bool {
