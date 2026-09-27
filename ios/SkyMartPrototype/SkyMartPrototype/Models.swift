@@ -10,6 +10,7 @@ struct ListingImage: Hashable { let url: URL; let thumbnailURL: URL }
 
 struct Listing: Identifiable, Hashable {
     let id: UUID
+    var serverID: Int? = nil
     var title: String
     var category: String
     var price: Int
