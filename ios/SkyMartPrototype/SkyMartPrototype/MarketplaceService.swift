@@ -44,7 +44,7 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
         if let category { items.append(.init(name:"category",value:category.lowercased().replacingOccurrences(of:" ",with:"-"))) }
         components.queryItems=items.isEmpty ? nil:items
         let data=try await send(URLRequest(url:components.url!),authenticated:false)
-        return try JSONDecoder().decode(ListingsEnvelope.self,from:data).data.map(Listing.init(api:))
+        return try JSONDecoder().decode(ListingsEnvelope.self,from:data).data.map { Listing(api:$0,baseURL:baseURL) }
     }
 
     func login(email:String,password:String,deviceName:String="iPhone") async throws -> APIUser {
@@ -104,14 +104,17 @@ private struct UserEnvelope:Decodable { let data:APIUser }
 private struct ListingsEnvelope:Decodable { let data:[APIListing] }
 private struct APIListing:Decodable {
     let id:Int;let title:String;let price_gbp:Double?;let location:String?;let description:String
-    let category:APICategory;let seller:APISeller
+    let category:APICategory;let seller:APISeller;let images:[APIListingImage]
 }
+private struct APIListingImage:Decodable { let url:String;let thumbnail_url:String }
 private struct APICategory:Decodable { let name:String }
 private struct APISeller:Decodable { let name:String }
 
 private extension Listing {
-    init(api:APIListing) {
+    init(api:APIListing,baseURL:URL) {
         self.init(id:UUID(),title:api.title,category:api.category.name,price:Int(api.price_gbp ?? 0),
-                  location:api.location ?? "",details:api.description,seller:api.seller.name,symbol:"airplane")
+                  location:api.location ?? "",details:api.description,seller:api.seller.name,symbol:"airplane",images:api.images.compactMap { item in
+            guard let u=URL(string:item.url,relativeTo:baseURL),let t=URL(string:item.thumbnail_url,relativeTo:baseURL) else{return nil};return ListingImage(url:u.absoluteURL,thumbnailURL:t.absoluteURL)
+        })
     }
 }
