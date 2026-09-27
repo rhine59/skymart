@@ -28,8 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "${SKYMART_PORT:-8080}:80"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost/health.php"]
       interval: 5s
