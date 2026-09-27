@@ -18,3 +18,10 @@
 | Search/filter | Not started | Phase 3 |
 | Favourites | Not started | Later |
 | Moderation/reporting | Not started | Later |
+
+## Account management UI
+
+- iOS account screen: implemented on Phase 3 branch (login, logout, forgotten-password request, change password, Keychain session restore).
+- Web administrator users console: implemented at `/admin/users.php`, guarded by active admin role and CSRF for state changes.
+- Production iOS API origin: configuration pending; placeholder origin must be replaced before deployment.
+- Password-reset mail transport: deployment configuration pending.
