@@ -8,6 +8,8 @@ protocol AuthenticationService {
     func login(email: String, password: String, deviceName: String) async throws -> APIUser
     func currentUser() async throws -> APIUser
     func logout() async throws
+    func createListing(title:String,category:String,price:Int,location:String,description:String) async throws -> Listing
+    func uploadJPEG(_ data:Data,to listingID:Int) async throws
     func requestPasswordReset(email: String) async throws
     func changePassword(current: String, new: String) async throws
 }
@@ -61,6 +63,18 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
         return try JSONDecoder().decode(UserEnvelope.self,from:data).data
     }
 
+    func createListing(title:String,category:String,price:Int,location:String,description:String) async throws -> Listing {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/listings"));request.httpMethod="POST";request.setValue("application/json",forHTTPHeaderField:"Content-Type")
+        request.httpBody=try JSONEncoder().encode(CreateListingRequest(title:title,category:category.lowercased().replacingOccurrences(of:" ",with:"-"),price_gbp:price,location:location,description:description))
+        let envelope=try JSONDecoder().decode(ListingEnvelope.self,from:try await send(request,authenticated:true))
+        return Listing(api:envelope.data,baseURL:baseURL)
+    }
+
+    func uploadJPEG(_ data:Data,to listingID:Int) async throws {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/listings/\(listingID)/images"));request.httpMethod="POST";request.setValue("image/jpeg",forHTTPHeaderField:"Content-Type");request.httpBody=data
+        _=try await send(request,authenticated:true)
+    }
+
     func requestPasswordReset(email:String) async throws {
         var request=URLRequest(url:baseURL.appending(path:"api/v1/auth/password-reset/request"));request.httpMethod="POST"
         request.setValue("application/json",forHTTPHeaderField:"Content-Type");request.httpBody=try JSONEncoder().encode(ResetRequest(email:email))
@@ -95,6 +109,8 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
 }
 
 enum APIError: Error { case notAuthenticated; case http(Int) }
+private struct CreateListingRequest:Encodable { let title:String;let category:String;let price_gbp:Int;let location:String;let description:String }
+private struct ListingEnvelope:Decodable { let data:APIListing }
 private struct ResetRequest:Encodable { let email:String }
 private struct ChangePasswordRequest:Encodable { let current_password:String;let new_password:String }
 private struct LoginRequest:Encodable { let email:String;let password:String;let device_name:String }
@@ -112,7 +128,7 @@ private struct APISeller:Decodable { let name:String }
 
 private extension Listing {
     init(api:APIListing,baseURL:URL) {
-        self.init(id:UUID(),title:api.title,category:api.category.name,price:Int(api.price_gbp ?? 0),
+        self.init(id:UUID(),serverID:api.id,title:api.title,category:api.category.name,price:Int(api.price_gbp ?? 0),
                   location:api.location ?? "",details:api.description,seller:api.seller.name,symbol:"airplane",images:api.images.compactMap { item in
             guard let u=URL(string:item.url,relativeTo:baseURL),let t=URL(string:item.thumbnail_url,relativeTo:baseURL) else{return nil};return ListingImage(url:u.absoluteURL,thumbnailURL:t.absoluteURL)
         })
