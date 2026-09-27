@@ -1,44 +1,55 @@
 # SkyMart
 
-SkyMart is an aviation-focused marketplace project for buying and selling aircraft, avionics, instruments, parts and related equipment.
+SkyMart is an aviation-focused marketplace for buying and selling aircraft, avionics, instruments, parts and related equipment.
 
-## Status
+## Technology baseline
 
-The repository is being converted from an early PHP/MySQL prototype into a maintainable application. The current code must be treated as development software, not production-ready.
+- PHP 8.4 + Apache 2.4
+- MariaDB 11.4 LTS, InnoDB and utf8mb4
+- mysqli prepared statements
+- Server-side PHP sessions and password_hash()/password_verify()
+- Server-rendered HTML + Bootstrap with selective JavaScript
+- Docker Compose for Mac development/test and Synology deployment
+- Synology reverse proxy for production HTTPS
 
-## Security baseline
+Apache exposes only the `public/` directory. Application internals, migrations and configuration remain outside the web document root.
 
-- Database credentials are supplied through environment variables and must never be committed.
-- Login uses parameterised SQL and PHP password verification.
-- Authentication state should use PHP sessions rather than client-controlled identity cookies.
-- Production must use HTTPS.
-- Errors must be logged server-side without exposing database details to users.
-- All database operations must use prepared statements.
-- Passwords for new/reset accounts must use `password_hash()`.
+## Phase 2
 
-Required environment variables:
+Phase 2 establishes environment-based configuration, server-side sessions, CSRF protection, prepared SQL, modern password hashing, registration/logout, versioned database migrations and a reproducible Docker environment.
 
+## Configuration
+
+Required application variables: `SKYMART_DB_HOST`, `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD`. Production Compose additionally requires `SKYMART_DB_ROOT_PASSWORD`. Never commit production secrets.
+
+Legacy prototype password hashes are intentionally unsupported. Historical database credentials previously committed to Git must be rotated.
+
+## Development and test
+
+```sh
+./scripts/rebuild.sh
+./scripts/test.sh
 ```
-SKYMART_DB_HOST=localhost
-SKYMART_DB_NAME=skymart
-SKYMART_DB_USER=...
-SKYMART_DB_PASSWORD=...
+
+Useful operations:
+
+```sh
+./scripts/status.sh
+./scripts/logs.sh
+./scripts/reset-db.sh
 ```
 
-## Important credential-rotation notice
+See `docs/DOCKER.md`, `docs/SECURITY.md`, `docs/ARCHITECTURE.md` and `docs/FEATURE-STATUS.md`.
 
-Credentials previously existed in repository history. Any database passwords that have ever been committed must be considered compromised and rotated. Removing them from the current branch does not remove them from Git history.
+## Repository layout
 
-## Current cleanup
+- `public/` — the only web-accessible document root
+- `bootstrap.php` — session/application bootstrap
+- `database.php` — environment-based DB connection
+- `lib/` — shared application helpers
+- `migrations/` — versioned schema
+- `docker/` — Apache/container configuration
+- `scripts/` — build, test and operations scripts
+- `docs/` — architecture, security and operational documentation
 
-The repository still contains legacy prototype pages. These are retained temporarily for reference while the application is rebuilt. They must not be exposed by a production web server.
-
-## Next development stages
-
-1. Complete secure account registration and password migration/reset.
-2. Add a single authentication/session layer and logout.
-3. Establish database migrations/schema.
-4. Build listings, categories, images and seller profiles.
-5. Add search/filtering and advert management.
-6. Add automated security and application tests.
-7. Containerise deployment for development and Synology hosting.
+Phase 3 will introduce `src/` application modules and implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.

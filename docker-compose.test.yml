@@ -1,0 +1,7 @@
+services:
+  db:
+    tmpfs:
+      - /var/lib/mysql
+  web:
+    ports:
+      - "127.0.0.1:${SKYMART_TEST_PORT:-18080}:80"
