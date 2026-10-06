@@ -6,7 +6,6 @@ services:
       MARIADB_PASSWORD: ${SKYMART_DB_PASSWORD:?set SKYMART_DB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${SKYMART_DB_ROOT_PASSWORD:?set SKYMART_DB_ROOT_PASSWORD}
     restart: unless-stopped
-
   web:
     environment:
       SKYMART_DB_HOST: db
@@ -15,5 +14,5 @@ services:
       SKYMART_DB_PASSWORD: ${SKYMART_DB_PASSWORD:?set SKYMART_DB_PASSWORD}
       SKYMART_TRUST_PROXY: "1"
     ports:
-      - "127.0.0.1:${SKYMART_PORT:-8080}:80"
+      - "${SKYMART_BIND_ADDRESS:-127.0.0.1}:${SKYMART_PORT:-8080}:80"
     restart: unless-stopped

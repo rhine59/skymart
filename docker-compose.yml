@@ -1,5 +1,6 @@
 services:
   db:
+    container_name: skymart-db
     image: mariadb:11.4
     environment:
       MARIADB_DATABASE: skymart
@@ -17,6 +18,7 @@ services:
     restart: unless-stopped
 
   web:
+    container_name: skymart-web
     build:
       context: .
       dockerfile: Dockerfile
@@ -31,8 +33,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "${SKYMART_PORT:-8080}:80"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost/health.php"]
       interval: 5s
