@@ -27,11 +27,18 @@ echo "$PORTS" | grep -q "127.0.0.1:$SKYMART_TEST_PORT" || { echo "FAIL: unexpect
 [ "$(echo "$PORTS" | wc -l | tr -d " ")" = "1" ] || { echo "FAIL: multiple test port bindings: $PORTS"; exit 1; }
 echo "==> Database schema checks"
 $COMPOSE exec -T db mariadb -uskymart -pskymart-dev-only skymart -e "SELECT COUNT(*) AS users_table FROM information_schema.tables WHERE table_schema='skymart' AND table_name='users'; SELECT COUNT(*) AS categories FROM categories; SELECT COUNT(*) AS listings_table FROM information_schema.tables WHERE table_schema='skymart' AND table_name='listings';"
+echo "==> API smoke test"
+BASE="http://127.0.0.1:$SKYMART_TEST_PORT"
+curl -fsS "$BASE/api/v1/health" | grep -q '"api":"v1"'
+curl -fsS "$BASE/api/v1/categories" | grep -q '"slug":"aircraft"'
+curl -fsS "$BASE/api/v1/listings?per_page=51" | grep -q '"per_page":50'
+BAD_PAGE="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/v1/listings?page=0")"
+[ "$BAD_PAGE" = "422" ] || { echo "FAIL: invalid API pagination returned $BAD_PAGE"; exit 1; }
 echo "==> HTTP/CSRF/auth smoke test"
-BASE="http://127.0.0.1:$SKYMART_TEST_PORT";COOKIE="$(mktemp)";PAGE="$(mktemp)"
+COOKIE="$(mktemp)";PAGE="$(mktemp)"
 curl -fsS -c "$COOKIE" "$BASE/register.php" > "$PAGE";TOKEN="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "$PAGE"|head -1)";[ -n "$TOKEN" ]||{ echo "FAIL: registration CSRF token missing";exit 1;}
 EMAIL="test@example.invalid"
 curl -fsS -b "$COOKIE" -c "$COOKIE" -L --data-urlencode "csrf_token=$TOKEN" --data-urlencode "name=SkyMart Test User" --data-urlencode "email=$EMAIL" --data-urlencode "phone=" --data-urlencode "password=Test-password-12345" --data-urlencode "password_confirm=Test-password-12345" "$BASE/register.php"|grep -q "Secure account foundation is active"
 COUNT="$($COMPOSE exec -T db mariadb -N -uskymart -pskymart-dev-only skymart -e "SELECT COUNT(*) FROM users WHERE email='$EMAIL';")";[ "$COUNT" = "1" ]||{ echo "FAIL: registration did not create user";exit 1;}
 PRIVATE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/private.php")";[ "$PRIVATE_CODE" = "302" ]||{ echo "FAIL: unauthenticated private page returned $PRIVATE_CODE";exit 1;}
-rm -f "$COOKIE" "$PAGE";echo "PASS: PHP 8.4, public-root isolation, migrations, registration and access-control smoke tests"
+rm -f "$COOKIE" "$PAGE";echo "PASS: PHP 8.4, API, public-root isolation, migrations, registration and access-control smoke tests"
