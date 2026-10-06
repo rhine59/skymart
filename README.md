@@ -46,7 +46,7 @@ Useful operations:
 ./scripts/reset-db.sh
 ```
 
-The complete server harness on merged Phase 3 validates PHP 8.4, API routing, public-root isolation, migrations, registration and access control.
+The merged Phase 3 checkpoint previously passed the complete server harness. On 6 October 2026 the live Synology deployment exposed a current API-routing regression: `/api/v1/health` returns HTTP 404 both directly on the loopback backend and through the public reverse proxy. The web health endpoint remains healthy. Treat API routing as unresolved until fixed and the harness is rerun.
 
 ## Repository layout
 
@@ -59,6 +59,14 @@ The complete server harness on merged Phase 3 validates PHP 8.4, API routing, pu
 - `scripts/` — build, migration, test and operational commands
 - `docs/` — maintained technical and user documentation
 
+## Current public deployment
+
+Canonical public web origin:
+
+`https://skymart.granvillehouse.synology.me:8082`
+
+The verified path is external TCP `8082` → FRITZ!Box port forwarding → Synology TCP `8442` → DSM HTTPS reverse proxy → `http://127.0.0.1:8082`. A dedicated Let's Encrypt certificate for `skymart.granvillehouse.synology.me` is assigned to the SkyMart reverse proxy; TLS 1.3 and `/health.php` HTTP 200 were verified on 6 October 2026. Do not expose the Docker backend directly.
+
 ## Production readiness
 
-The server foundation and Phase 3 API pass the automated harness. Public production launch still requires the deployment checklist in the Deployment Guide, including rotated secrets, HTTPS/reverse proxy, mail transport, backups/restore testing and rate limiting. The iPhone source also still requires a complete Xcode project/device build and end-to-end validation before release.
+The server foundation and Phase 3 API passed the earlier automated harness, but the current live deployment has an unresolved API-routing 404 regression that must be fixed and retested. Public production launch still requires the deployment checklist in the Deployment Guide, including rotated secrets, HTTPS/reverse proxy, mail transport, backups/restore testing and rate limiting. The iPhone source also still requires a complete Xcode project/device build and end-to-end validation before release.
