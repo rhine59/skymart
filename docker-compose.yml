@@ -1,5 +1,7 @@
 services:
-  db:\n    container_name: skymart-db\n    image: mariadb:11.4
+  db:
+    container_name: skymart-db
+    image: mariadb:11.4
     environment:
       MARIADB_DATABASE: skymart
       MARIADB_USER: skymart
@@ -15,7 +17,9 @@ services:
       retries: 20
     restart: unless-stopped
 
-  web:\n    container_name: skymart-web\n    build:
+  web:
+    container_name: skymart-web
+    build:
       context: .
       dockerfile: Dockerfile
     environment:
