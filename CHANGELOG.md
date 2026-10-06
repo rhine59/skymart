@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Build performance
+- Reordered the Dockerfile so revision-specific OCI metadata no longer invalidates the expensive PHP extension layer on every Git commit.
+- Enabled normal Docker layer caching for routine rebuilds while retaining base-image pulls and deployment revision verification.
+- Kept the isolated harness as the release gate, including checkout/container/image revision equality checks.
+
 ### Deployment checkpoint — 6 October 2026
 - Established canonical public web origin `https://skymart.granvillehouse.synology.me:8082`.
 - Verified DNS, external connectivity, TLS 1.3, dedicated Let's Encrypt hostname certificate and public `/health.php` HTTP 200.
