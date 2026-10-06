@@ -11,6 +11,8 @@
 - State-changing forms carry CSRF tokens.
 - HTML output derived from users must be escaped.
 - Production must be HTTPS-only.
+- Current public HTTPS origin is `https://skymart.granvillehouse.synology.me:8082`; DSM terminates TLS using a dedicated Let's Encrypt certificate for that hostname and proxies to the loopback-only backend.
+- The FRITZ!Box exposes only the DSM reverse-proxy listener for SkyMart (external TCP 8082 to NAS 8442); the application backend at `127.0.0.1:8082` remains non-public.
 
 ## Mandatory operational action
 
