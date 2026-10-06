@@ -7,7 +7,9 @@
 - Verified DNS, external connectivity, TLS 1.3, dedicated Let's Encrypt hostname certificate and public `/health.php` HTTP 200.
 - Documented network path: FRITZ!Box external TCP 8082 → Synology 8442 → DSM HTTPS reverse proxy → loopback SkyMart HTTP 8082.
 - Kept the SkyMart Docker backend loopback-only rather than exposing it directly.
-- Identified a current `/api/v1/health` HTTP 404 regression on both loopback and public paths; this is an application/Apache routing issue and remains open pending fix and harness rerun.
+- Identified `/api/v1/health` HTTP 404 on the live deployment and traced it to deployment drift: the running web container had an older Apache vhost without the current API rewrite rules.
+- Ran the full isolated server harness against current `main`: PASS for PHP 8.4, API, public-root isolation, migrations, registration and access control.
+- Rebuilt the live `skymart-web` container from current `main`; local `/api/v1/health` returned HTTP 200 with the expected v1 health JSON.
 
 ### Documentation
 - Added comprehensive User Guide covering accounts, browsing, selling, images, password lifecycle and administration.
