@@ -4,6 +4,10 @@ SkyMart uses one versioned JSON API for native clients and future web integratio
 
 Base path: `/api/v1`
 
+Current public origin: `https://skymart.granvillehouse.synology.me:8082`
+
+> Operational status (6 October 2026): the API contract below remains the intended v1 contract, but the deployed `/api/v1/health` route currently returns HTTP 404 both directly on the NAS loopback backend and through the public reverse proxy. Earlier Phase 3 harness validation passed. Treat API routing as a known regression until it is fixed and the harness is rerun.
+
 ## Principles
 - JSON request/response bodies.
 - Stable resource IDs.
