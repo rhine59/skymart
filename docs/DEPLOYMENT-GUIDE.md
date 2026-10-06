@@ -227,7 +227,68 @@ The development reset command:
 
 destroys development database state. Do **not** use it against production.
 
-## 11. Backup policy
+## 11. Secret-file protection and backup
+
+Production secrets must remain outside Git. The deployment host may use a local `.env` file, but it must be a regular file with mode `600` (or `400` when deliberately read-only). `.env` and `.env.*` are Git-ignored; only `.env.example`, containing names/placeholders rather than secret values, is tracked.
+
+Run:
+
+```sh
+./scripts/check-secrets.sh
+```
+
+The rebuild script runs this check automatically. It refuses deployment if a real environment file is tracked by Git or if the configured `.env` has permissions broader than owner-only access.
+
+### Encrypted backup design
+
+Do not place plaintext `.env` copies in Hyper Backup, shared folders, cloud sync, email or Git. SkyMart uses GPG public-key encryption for secret backups:
+
+- the Synology holds the production `.env` and the **public** recovery key;
+- the matching **private** recovery key is kept off the Synology;
+- `scripts/backup-env.sh` encrypts `.env` directly to a timestamped `.gpg` artifact;
+- only the encrypted `.gpg` files should be included in normal/off-site backups;
+- compromise of the public key does not permit decryption.
+
+Create or select a dedicated recovery GPG key on a trusted device, export/import **only its public key** to the Synology, and record its full fingerprint. Keep at least two protected copies of the private recovery key in separate locations (for example a reputable password manager that supports secure file storage plus encrypted offline/removable storage). The private key passphrase and private-key backup must not be stored beside the encrypted SkyMart backups.
+
+Configure the NAS deployment environment with the full fingerprint, not an email/name:
+
+```text
+SKYMART_GPG_RECIPIENT=<full recovery public-key fingerprint>
+SKYMART_SECRET_BACKUP_DIR=/volume1/backups/skymart/secrets
+```
+
+Then create a backup:
+
+```sh
+SKYMART_GPG_RECIPIENT=<fingerprint> ./scripts/backup-env.sh
+```
+
+The script requires safe source permissions, an exact recipient fingerprint, creates files under a restrictive umask and verifies the resulting encrypted packet without exposing plaintext.
+
+### Backup schedule and retention
+
+A secret backup is most important **after a secret changes**. Run the backup immediately after creating/rotating production credentials and before depending on the new values. A daily scheduled run is also reasonable and cheap. Retain multiple generations; a practical baseline is 30 daily copies plus a longer-lived copy after every intentional credential rotation. Do not automatically delete the last known-good pre-rotation backup until the new credentials and restore path are proven.
+
+The encrypted secret-backup directory should itself be included in the NAS/off-site backup regime. This provides two independent failure protections: loss of the live `.env`, and loss of the NAS.
+
+### Restore drill
+
+Recovery must be tested; an encrypted file without a proven private key is not a backup. On a trusted recovery machine that has the private key, copy one encrypted backup into an isolated directory and run:
+
+```sh
+SKYMART_ENV_FILE=.env.recovery-test ./scripts/restore-env.sh /path/to/skymart-env-YYYYMMDDTHHMMSSZ.gpg
+```
+
+Verify that the restored file has mode `600` and contains the expected variable names. Do not display secret values in logs/screenshots. Delete the recovery-test plaintext securely when finished.
+
+On the Synology, `restore-env.sh` deliberately refuses to overwrite an existing `.env`. Move the existing file aside securely first when performing an actual authorised recovery.
+
+### What must be recoverable
+
+The secret backup should cover all production-only values used by the deployment, including database/root credentials, application/public URL and mail configuration, and any future API/service secrets. The GPG **private recovery key is not part of the SkyMart `.env` backup** and must be backed up separately.
+
+## 12. Backup policy
 
 A complete recoverable backup needs both:
 
@@ -243,7 +304,7 @@ Also retain:
 
 Do not rely on Git as a database or upload backup.
 
-## 12. Restore procedure
+## 13. Restore procedure
 
 Practice this before public launch.
 
@@ -257,7 +318,7 @@ Practice this before public launch.
 8. Verify representative accounts, listings and images.
 9. Only then treat the backup as proven recoverable.
 
-## 13. Upgrade procedure
+## 14. Upgrade procedure
 
 Recommended release flow:
 
@@ -275,7 +336,7 @@ Recommended release flow:
 
 If verification fails, stop exposing the failed release, preserve evidence/logs and restore the prior application commit/database backup as required.
 
-## 14. Production readiness checklist
+## 15. Production readiness checklist
 
 Do not call the service public-production-ready until all are true:
 
@@ -293,7 +354,7 @@ Do not call the service public-production-ready until all are true:
 - operational monitoring/log retention agreed;
 - account/admin flows tested with non-production accounts.
 
-## 15. Current Synology deployment
+## 16. Current Synology deployment
 
 The current project uses containers named `skymart-web` and `skymart-db`. The web backend is loopback-bound at `127.0.0.1:8082` because host port 8080 is already occupied. Public access is only through the DSM reverse proxy topology documented in section 8. Treat backend port selection as deployment configuration rather than hard-coding a Synology-specific value into application source.
 
