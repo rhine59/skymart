@@ -2,6 +2,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 export SKYMART_TEST_PORT="${SKYMART_TEST_PORT:-18080}"
+export SKYMART_BUILD_SHA="$(git rev-parse HEAD 2>/dev/null || echo test-unknown)"
 COMPOSE="docker compose -p skymart-test -f docker-compose.yml -f docker-compose.test.yml"
 cleanup(){ $COMPOSE down -v --remove-orphans >/dev/null 2>&1 || true; }
 trap cleanup EXIT INT TERM
@@ -16,6 +17,11 @@ until curl -fsS "http://127.0.0.1:$SKYMART_TEST_PORT/health.php" >/dev/null; do
   fi
   sleep 2
 done
+echo "==> Build revision checks"
+RUNNING_SHA="$($COMPOSE exec -T web printenv SKYMART_BUILD_SHA)"
+[ "$RUNNING_SHA" = "$SKYMART_BUILD_SHA" ] || { echo "FAIL: running revision $RUNNING_SHA != expected $SKYMART_BUILD_SHA"; exit 1; }
+IMAGE_SHA="$(docker inspect "$($COMPOSE ps -q web)" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
+[ "$IMAGE_SHA" = "$SKYMART_BUILD_SHA" ] || { echo "FAIL: image revision $IMAGE_SHA != expected $SKYMART_BUILD_SHA"; exit 1; }
 echo "==> PHP version and syntax checks"
 $COMPOSE exec -T web php -r 'if (PHP_VERSION_ID < 80400) { fwrite(STDERR, "PHP 8.4+ required\n"); exit(1); }'
 $COMPOSE exec -T web sh -c 'find /var/www/skymart -name "*.php" -type f -print0 | xargs -0 -n1 php -l'
