@@ -9,11 +9,14 @@ Runtime topology:
 ```text
 Internet / client
       |
-    HTTPS
+HTTPS :8082
       |
-Synology reverse proxy
+FRITZ!Box port forward
+external 8082 -> Synology 8442
       |
-127.0.0.1:<SkyMart port>
+Synology DSM HTTPS reverse proxy :8442
+      |
+HTTP 127.0.0.1:8082
       |
 skymart-web (PHP 8.4 + Apache)
       |
@@ -148,7 +151,25 @@ Check status and health before exposing traffic.
 
 ## 8. Synology reverse proxy and HTTPS
 
-Configure the Synology reverse proxy so the approved public HTTPS hostname forwards to the SkyMart loopback HTTP port.
+The current approved public origin is:
+
+`https://skymart.granvillehouse.synology.me:8082`
+
+The verified production-style path on 6 October 2026 is:
+
+```text
+Internet HTTPS :8082
+  -> FRITZ!Box TCP external 8082 to Synology 8442
+  -> DSM reverse proxy source HTTPS skymart.granvillehouse.synology.me:8442
+  -> destination HTTP 127.0.0.1:8082
+  -> skymart-web
+```
+
+SkyMart remains bound to loopback; port 8082 on the container/backend is not directly exposed to the Internet. The unusual external port is intentional so the existing public port 443 configuration is not changed.
+
+DSM has a dedicated Let's Encrypt certificate whose CN/SAN matches `skymart.granvillehouse.synology.me`, assigned specifically to the SkyMart reverse-proxy service. TLS 1.3, certificate verification and `GET /health.php` returning HTTP 200 were verified externally on 6 October 2026.
+
+Configure/retain the Synology reverse proxy so the approved public HTTPS hostname forwards to the SkyMart loopback HTTP port.
 
 Requirements:
 
@@ -156,7 +177,7 @@ Requirements:
 2. Backend target is loopback, not a public Docker port.
 3. Forwarded HTTPS headers are preserved so SkyMart can create secure cookies.
 4. `SKYMART_TRUST_PROXY=1` is used only behind the trusted proxy.
-5. `SKYMART_PUBLIC_URL` exactly matches the externally approved HTTPS origin.
+5. `SKYMART_PUBLIC_URL` exactly matches `https://skymart.granvillehouse.synology.me:8082` on the current deployment.
 
 Do not enable trusted-proxy handling on an Internet-exposed container that can receive spoofed forwarding headers directly.
 
@@ -193,6 +214,8 @@ Use container health plus the application endpoints:
 
 - `/health.php` for web/container health;
 - `/api/v1/health` for API routing/health.
+
+Current operational status (6 October 2026): the public `/health.php` endpoint is verified HTTP 200 with a valid certificate. `/api/v1/health` currently returns HTTP 404 both at `http://127.0.0.1:8082` on the NAS and through the public proxy. Because the failure is also present on the loopback backend, it is an application/Apache routing regression rather than a DSM reverse-proxy fault. Do not mark the API healthy until this is fixed and the server harness is rerun.
 
 The development reset command:
 
@@ -268,6 +291,14 @@ Do not call the service public-production-ready until all are true:
 - operational monitoring/log retention agreed;
 - account/admin flows tested with non-production accounts.
 
-## 15. Current known Synology development deployment
+## 15. Current Synology deployment
 
-The current project convention uses containers named `skymart-web` and `skymart-db`. Development has previously used a loopback port override because port 8080 was occupied. Treat port selection as environment configuration rather than hard-coding a Synology-specific value into application source.
+The current project uses containers named `skymart-web` and `skymart-db`. The web backend is loopback-bound at `127.0.0.1:8082` because host port 8080 is already occupied. Public access is only through the DSM reverse proxy topology documented in section 8. Treat backend port selection as deployment configuration rather than hard-coding a Synology-specific value into application source.
+
+For this deployment set:
+
+```text
+SKYMART_PUBLIC_URL=https://skymart.granvillehouse.synology.me:8082
+```
+
+The FRITZ!Box rule is TCP only: external port 8082 to the Synology device port 8442. DSM owns TLS on 8442 and proxies to the loopback HTTP backend on 8082.
