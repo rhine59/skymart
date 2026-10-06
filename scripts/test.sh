@@ -22,6 +22,7 @@ RUNNING_SHA="$($COMPOSE exec -T web printenv SKYMART_BUILD_SHA)"
 [ "$RUNNING_SHA" = "$SKYMART_BUILD_SHA" ] || { echo "FAIL: running revision $RUNNING_SHA != expected $SKYMART_BUILD_SHA"; exit 1; }
 IMAGE_SHA="$(docker inspect "$($COMPOSE ps -q web)" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
 [ "$IMAGE_SHA" = "$SKYMART_BUILD_SHA" ] || { echo "FAIL: image revision $IMAGE_SHA != expected $SKYMART_BUILD_SHA"; exit 1; }
+echo "PASS: build revision expected=$SKYMART_BUILD_SHA container=$RUNNING_SHA image=$IMAGE_SHA"
 echo "==> PHP version and syntax checks"
 $COMPOSE exec -T web php -r 'if (PHP_VERSION_ID < 80400) { fwrite(STDERR, "PHP 8.4+ required\n"); exit(1); }'
 $COMPOSE exec -T web sh -c 'find /var/www/skymart -name "*.php" -type f -print0 | xargs -0 -n1 php -l'
