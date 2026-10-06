@@ -1,7 +1,9 @@
 services:
   db:
+    container_name: skymart-test-db
     tmpfs:
       - /var/lib/mysql
   web:
+    container_name: skymart-test-web
     ports:
       - "127.0.0.1:${SKYMART_TEST_PORT:-18080}:80"
