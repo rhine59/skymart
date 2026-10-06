@@ -82,6 +82,8 @@ Default endpoint is `127.0.0.1:8080`. Override it when required:
 SKYMART_PORT=8082 ./scripts/rebuild.sh
 ```
 
+Routine rebuilds use Docker's layer cache. The stable PHP runtime/extension layer is intentionally built before revision-specific image metadata, so a new application commit does not recompile PHP extensions when the runtime inputs are unchanged. The build still pulls the configured base image and rebuilds any layer whose inputs changed.
+
 The development Compose credentials are intentionally development-only and must never be reused in production.
 
 ## 5. Automated validation
