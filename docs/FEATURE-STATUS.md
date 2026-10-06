@@ -1,40 +1,36 @@
-# Feature status
+# Feature Status
+
+Status terms:
+- **Implemented + tested** — present on `main` and covered by the server harness or directly validated.
+- **Implemented, integration pending** — source exists but full release/device/production integration is not yet proven.
+- **Pending** — not implemented as a complete capability.
 
 | Area | Status | Notes |
 |---|---|---|
-| Environment-based DB configuration | Implemented | Phase 1 |
-| Prepared login query | Implemented | Phase 1 |
-| Server-side session authentication | Implemented | Phase 2 |
-| CSRF protection | Implemented | Login, registration and logout |
-| Secure registration | Implemented | Prepared insert + password_hash |
-| Logout | Implemented | POST + CSRF |
-| Database migrations | Implemented | Initial users/categories/listings schema |
-| PHP/Apache container | Implemented — execution pending | PHP 8.4, Apache 2.4, public-only document root |
-| MariaDB container | Implemented — execution pending | MariaDB 11.4 LTS |
-| Synology production override | Implemented — execution pending | Environment secrets + trusted reverse proxy |
-| Automated test harness | Implemented — execution pending | Dedicated skymart-test Compose project; PHP, isolation, schema, registration and auth |
-| Marketplace listings UI | Not started | Phase 3 |
-| Listing images | Not started | Phase 3 |
-| Search/filter | Not started | Phase 3 |
-| Favourites | Not started | Later |
-| Moderation/reporting | Not started | Later |
+| PHP 8.4 / Apache container | Implemented + tested | Public document root only |
+| MariaDB 11.4 | Implemented + tested | Private Compose network |
+| Environment DB configuration | Implemented + tested | Production secrets remain external |
+| Browser sessions / CSRF | Implemented + tested | Login, registration, logout/access checks |
+| Password hashing | Implemented + tested | PHP password APIs |
+| Versioned migrations | Implemented + tested | 001–005 currently present |
+| API routing / health | Implemented + tested | `/api/v1` front controller |
+| Categories / public listing search | Implemented + tested | API smoke covers categories/pagination validation |
+| Listing create/update/withdraw | Implemented | API/service source present; broader E2E coverage should be added |
+| Native bearer authentication | Implemented | 30-day opaque tokens, hashed at rest |
+| Account lifecycle | Implemented | Profile/password/reset/deactivation API |
+| Admin account management | Implemented | Web console + API |
+| Listing photographs | Implemented | JPEG processing, max 10, display/thumb variants |
+| Synology production override | Implemented, deployment pending | Requires real secrets/reverse proxy/mail/backup readiness |
+| SwiftUI browse/search/detail | Implemented, integration pending | Source present |
+| SwiftUI account/Keychain | Implemented, integration pending | Requires Xcode/device E2E validation |
+| SwiftUI Sell + photo upload | Implemented, integration pending | Partial-publish risk remains |
+| Complete Xcode project/release build | Pending | Next major client task |
+| Browser marketplace management UI | Pending | Current browser UI is account foundation/admin |
+| Favourites | Pending | API contract not implemented |
+| Image reorder/retry/resume | Pending | |
+| Rate limiting | Pending | Required before public launch |
+| Moderation/reporting/audit | Pending | |
+| Production mail transport | Pending | Required for password reset |
+| Backup/restore drill | Pending | Required before public launch |
 
-## Account management UI
-
-- iOS account screen: implemented on Phase 3 branch (login, logout, forgotten-password request, change password, Keychain session restore).
-- Web administrator users console: implemented at `/admin/users.php`, guarded by active admin role and CSRF for state changes.
-- Production iOS API origin: configuration pending; placeholder origin must be replaced before deployment.
-- Password-reset mail transport: deployment configuration pending.
-
-## iOS advert publishing and photographs
-
-- Native PhotosPicker selection: implemented, maximum 10 images.
-- Local selected-photo preview/removal: implemented.
-- JPEG conversion before upload: implemented.
-- Authenticated real advert creation: implemented.
-- Stable server listing ID retained in the Swift model.
-- Sequential authenticated image upload with progress: implemented.
-- API advert gallery decoding and swipeable detail gallery: implemented.
-- Image reordering after upload: pending.
-- Upload retry/resume and per-image failure recovery: pending.
-- Full Xcode/device build and Docker integration execution: pending; implementation status must not be interpreted as tested status.
+See [User Guide](USER-GUIDE.md), [Deployment Guide](DEPLOYMENT-GUIDE.md) and [Architecture Guide](ARCHITECTURE.md).
