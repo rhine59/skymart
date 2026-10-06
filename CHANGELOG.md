@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Deployment checkpoint — 6 October 2026
+- Established canonical public web origin `https://skymart.granvillehouse.synology.me:8082`.
+- Verified DNS, external connectivity, TLS 1.3, dedicated Let's Encrypt hostname certificate and public `/health.php` HTTP 200.
+- Documented network path: FRITZ!Box external TCP 8082 → Synology 8442 → DSM HTTPS reverse proxy → loopback SkyMart HTTP 8082.
+- Kept the SkyMart Docker backend loopback-only rather than exposing it directly.
+- Identified a current `/api/v1/health` HTTP 404 regression on both loopback and public paths; this is an application/Apache routing issue and remains open pending fix and harness rerun.
+
 ### Documentation
 - Added comprehensive User Guide covering accounts, browsing, selling, images, password lifecycle and administration.
 - Added comprehensive Deployment and Operations Guide covering authoritative-source workflow, Docker/Synology deployment, migrations, HTTPS proxying, backups, restores, upgrades and production readiness.
