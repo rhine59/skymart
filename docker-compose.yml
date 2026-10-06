@@ -22,6 +22,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        SKYMART_BUILD_SHA: ${SKYMART_BUILD_SHA:-unknown}
+        SKYMART_BUILD_SOURCE: https://github.com/rhine59/skymart
     environment:
       SKYMART_DB_HOST: db
       SKYMART_DB_NAME: skymart
