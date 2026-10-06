@@ -1,30 +1,36 @@
 # SkyMart
 
-SkyMart is an aviation-focused marketplace for buying and selling aircraft, avionics, instruments, parts and related equipment.
+SkyMart is an aviation-focused marketplace for buying and selling aircraft, engines, propellers, avionics, instruments, parts, pilot equipment and miscellaneous aeronautical items.
 
-## Technology baseline
+## Authoritative source
+
+The GitHub `main` branch is the source of truth. Deployments must be built from a known `main` commit; local NAS/Mac edits and unmerged branches are not authoritative.
+
+## Current platform
 
 - PHP 8.4 + Apache 2.4
-- MariaDB 11.4 LTS, InnoDB and utf8mb4
-- mysqli prepared statements
-- Server-side PHP sessions and password_hash()/password_verify()
-- Server-rendered HTML + Bootstrap with selective JavaScript
-- Docker Compose for Mac development/test and Synology deployment
-- Synology reverse proxy for production HTTPS
+- MariaDB 11.4 LTS / InnoDB / utf8mb4
+- Server-rendered web account UI plus versioned JSON API at `/api/v1`
+- SwiftUI iPhone client source with a shared `MarketplaceService` boundary
+- Docker Compose development, isolated test and Synology production profiles
+- Listing image processing with PHP GD and storage outside the public document root
+- Browser sessions plus opaque 30-day bearer tokens for native clients
 
-Apache exposes only the `public/` directory. Application internals, migrations and configuration remain outside the web document root.
+Apache exposes only `public/`. Application code, migrations, configuration and uploaded originals are not directly web-accessible.
 
-## Phase 2
+## Documentation
 
-Phase 2 establishes environment-based configuration, server-side sessions, CSRF protection, prepared SQL, modern password hashing, registration/logout, versioned database migrations and a reproducible Docker environment.
+| Guide | Purpose |
+|---|---|
+| [User guide](docs/USER-GUIDE.md) | Account, browsing, selling, photographs, password and administrator workflows |
+| [Deployment guide](docs/DEPLOYMENT-GUIDE.md) | Development, test, Synology deployment, migrations, reverse proxy, backup, restore and operations |
+| [Architecture guide](docs/ARCHITECTURE.md) | Components, request/data flows, security boundaries, schema, API/mobile design and architectural decisions |
+| [API reference](docs/API.md) | Current `/api/v1` contract |
+| [Security guide](docs/SECURITY.md) | Security controls, risks and production requirements |
+| [Feature status](docs/FEATURE-STATUS.md) | Implemented/tested/pending capability matrix |
+| [Changelog](CHANGELOG.md) | Repository change history |
 
-## Configuration
-
-Required application variables: `SKYMART_DB_HOST`, `SKYMART_DB_NAME`, `SKYMART_DB_USER`, `SKYMART_DB_PASSWORD`. Production Compose additionally requires `SKYMART_DB_ROOT_PASSWORD`. Never commit production secrets.
-
-Legacy prototype password hashes are intentionally unsupported. Historical database credentials previously committed to Git must be rotated.
-
-## Development and test
+## Development and validation
 
 ```sh
 ./scripts/rebuild.sh
@@ -36,20 +42,23 @@ Useful operations:
 ```sh
 ./scripts/status.sh
 ./scripts/logs.sh
+./scripts/migrate.sh
 ./scripts/reset-db.sh
 ```
 
-See `docs/DOCKER.md`, `docs/SECURITY.md`, `docs/ARCHITECTURE.md` and `docs/FEATURE-STATUS.md`.
+The complete server harness on merged Phase 3 validates PHP 8.4, API routing, public-root isolation, migrations, registration and access control.
 
 ## Repository layout
 
-- `public/` — the only web-accessible document root
-- `bootstrap.php` — session/application bootstrap
-- `database.php` — environment-based DB connection
-- `lib/` — shared application helpers
-- `migrations/` — versioned schema
-- `docker/` — Apache/container configuration
-- `scripts/` — build, test and operations scripts
-- `docs/` — architecture, security and operational documentation
+- `public/` — only HTTP document root; browser pages, API and controlled media endpoint
+- `src/` — reusable domain/application services
+- `lib/` — shared security helpers
+- `migrations/` — ordered database schema changes
+- `ios/SkyMartPrototype/` — SwiftUI client source
+- `docker/` and `docker-compose*.yml` — container/deployment definitions
+- `scripts/` — build, migration, test and operational commands
+- `docs/` — maintained technical and user documentation
 
-Phase 3 will introduce `src/` application modules and implement advert creation/editing, aviation categories, search/browse, listing lifecycle and image handling.
+## Production readiness
+
+The server foundation and Phase 3 API pass the automated harness. Public production launch still requires the deployment checklist in the Deployment Guide, including rotated secrets, HTTPS/reverse proxy, mail transport, backups/restore testing and rate limiting. The iPhone source also still requires a complete Xcode project/device build and end-to-end validation before release.
