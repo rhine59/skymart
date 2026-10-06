@@ -18,11 +18,14 @@ else
 fi
 
 # Scan tracked text for high-risk private-key material. Never print secret values.
-if git grep -I -l -E -- 'BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY|BEGIN PGP PRIVATE KEY BLOCK' -- . ':!docs/*' ':!scripts/check-secrets.sh' >/tmp/skymart-secret-files.$$ 2>/dev/null; then
+git grep -I -l -E -- 'BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY|BEGIN PGP PRIVATE KEY BLOCK' -- . 2>/dev/null | grep -v '^scripts/check-secrets.sh
+echo "PASS: no tracked private-key blocks detected"
+ | grep -v '^docs/' >/tmp/skymart-secret-files.$ || true
+if [ -s /tmp/skymart-secret-files.$ ]; then
   echo "FAIL: tracked private-key material detected in:"
-  cat /tmp/skymart-secret-files.$$
-  rm -f /tmp/skymart-secret-files.$$
+  cat /tmp/skymart-secret-files.$
+  rm -f /tmp/skymart-secret-files.$
   exit 1
 fi
-rm -f /tmp/skymart-secret-files.$$
+rm -f /tmp/skymart-secret-files.$
 echo "PASS: no tracked private-key blocks detected"
