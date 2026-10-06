@@ -1,4 +1,10 @@
 FROM php:8.4-apache
+ARG SKYMART_BUILD_SHA=unknown
+ARG SKYMART_BUILD_SOURCE=https://github.com/rhine59/skymart
+LABEL org.opencontainers.image.title="SkyMart" \
+      org.opencontainers.image.source="${SKYMART_BUILD_SOURCE}" \
+      org.opencontainers.image.revision="${SKYMART_BUILD_SHA}"
+ENV SKYMART_BUILD_SHA="${SKYMART_BUILD_SHA}"
 RUN apt-get update && apt-get install -y --no-install-recommends curl libonig-dev libjpeg62-turbo-dev libpng-dev libfreetype6-dev \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install mysqli mbstring gd \
