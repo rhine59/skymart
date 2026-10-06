@@ -9,7 +9,7 @@ export SKYMART_BUILD_SHA="$(git rev-parse HEAD)"
 
 echo "==> Rebuilding SkyMart development containers from $SKYMART_BUILD_SHA"
 $COMPOSE down --remove-orphans
-$COMPOSE build --pull --no-cache
+$COMPOSE build --pull
 $COMPOSE up -d
 
 echo "==> Waiting for health"
