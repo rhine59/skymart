@@ -6,7 +6,15 @@ SkyMart is a marketplace for aeronautical equipment. Current categories are Airc
 
 This guide describes functions present in the current `main` source. Some functions are exposed through the JSON API/iPhone source before the browser UI has equivalent screens; those distinctions are called out explicitly.
 
-## 2. Accounts
+## 2. Opening SkyMart
+
+The current public web address is:
+
+`https://skymart.granvillehouse.synology.me:8082`
+
+The HTTPS hostname and certificate were directly verified on 6 October 2026. The web health endpoint is operational. Native/iPhone API use is temporarily blocked by a known `/api/v1` routing regression documented in the Deployment and Feature Status guides.
+
+## 3. Accounts
 
 ### Create an account on the web
 
@@ -26,7 +34,7 @@ Native tokens expire after 30 days. Logging out revokes the current token. Passw
 
 > The iPhone source is implemented but is not yet documented as a released App Store/TestFlight build. A complete Xcode/device validation remains required.
 
-## 3. Browsing and searching adverts
+## 4. Browsing and searching adverts
 
 The marketplace API supports:
 
@@ -39,7 +47,7 @@ The marketplace API supports:
 
 The SwiftUI marketplace source provides browse/search, category filtering, listing details and image display. Only adverts with status `active` and which have not expired are returned publicly.
 
-## 4. Selling an item
+## 5. Selling an item
 
 The current iPhone Sell workflow requires the user to be signed in.
 
@@ -56,7 +64,7 @@ The server validates the advert independently of the phone. Current limits inclu
 
 A newly created advert currently becomes `active` immediately, after which selected photographs are uploaded sequentially. This means a failed photo upload can leave an active advert with only some or none of its intended photographs. A future draft/upload/publish transaction is recommended before public production use.
 
-## 5. Photographs
+## 6. Photographs
 
 Each advert supports up to 10 JPEG images.
 
@@ -72,7 +80,7 @@ The server:
 
 The current iPhone source supports selecting, previewing and removing photos before publishing. Image reordering and per-image upload retry/resume are not yet implemented.
 
-## 6. Managing your account
+## 7. Managing your account
 
 The native account API supports changing the user's name/phone, changing password and deactivating the account. The current iPhone Account screen exposes sign-in, sign-out, forgotten-password request and password change.
 
@@ -90,7 +98,7 @@ Password-reset email depends on production mail transport and `SKYMART_PUBLIC_UR
 
 The API supports authenticated account deactivation after password confirmation. Deactivation changes account status and revokes native device tokens. The current iPhone UI does not yet expose this operation.
 
-## 7. Advert lifecycle
+## 8. Advert lifecycle
 
 Database states are:
 
@@ -104,7 +112,7 @@ The API supports creating, editing and withdrawing adverts owned by the authenti
 
 The current iPhone UI does not yet expose every lifecycle operation.
 
-## 8. Administrator guide
+## 9. Administrator guide
 
 Users with `role=admin` and `status=active` can access the web administrator user console at `/admin/users.php`.
 
@@ -120,10 +128,11 @@ An administrator cannot disable their own account through the current console. D
 
 The API also exposes equivalent administrator user-list/status/device-revocation operations.
 
-## 9. Current limitations
+## 10. Current limitations
 
 Before treating SkyMart as a public production marketplace, note:
 
+- the current `/api/v1` routing regression must be fixed and the server harness rerun before native/iPhone integration testing;
 - the iPhone source still needs a complete Xcode project/device build and end-to-end validation;
 - browser marketplace listing management is not yet a complete user experience;
 - favourites are not yet implemented server-side;
