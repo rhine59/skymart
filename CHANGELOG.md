@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Secret protection
+- Added deployment checks preventing tracked secret env files and rejecting unsafe `.env` permissions.
+- Added GPG public-key encrypted `.env` backup tooling and non-overwriting restore tooling.
+- Documented off-host private-key custody, backup retention and mandatory restore drills.
+
 ### Build performance
 - Reordered the Dockerfile so revision-specific OCI metadata no longer invalidates the expensive PHP extension layer on every Git commit.
 - Enabled normal Docker layer caching for routine rebuilds while retaining base-image pulls and deployment revision verification.
