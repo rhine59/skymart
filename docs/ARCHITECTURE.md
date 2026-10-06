@@ -21,8 +21,9 @@ Core principles:
 ```text
                     +----------------------+
 Browser ------------|                      |
-                    | Synology HTTPS       |---- loopback ----+
-iPhone --------------| reverse proxy        |                  |
+                    | Public HTTPS :8082   |
+iPhone --------------| FRITZ!Box -> DSM    |
+                    | proxy :8442          |---- loopback ----+
                     +----------------------+                  v
                                                    +--------------------+
                                                    | skymart-web        |
@@ -98,9 +99,9 @@ The iPhone UI depends on protocols rather than URLSession directly. `MockMarketp
 
 ## 6. API routing
 
-Apache rewrites `/api/v1/... ` to the API front controller while explicitly excluding an already-routed `api/v1/index.php` request to prevent internal redirect recursion.
+The intended design is for Apache to rewrite `/api/v1/...` to the API front controller while explicitly excluding an already-routed `api/v1/index.php` request to prevent internal redirect recursion. The API front controller derives the route from `PATH_INFO`, validates input and returns a stable JSON error shape.
 
-The API front controller derives the route from `PATH_INFO`, validates input and returns a stable JSON error shape.
+**Current deployment exception:** on 6 October 2026, `/api/v1/health` returned HTTP 404 both directly against the NAS loopback backend and through the public HTTPS reverse proxy. This proves the current fault is below the proxy boundary, in the Apache/application routing path. Earlier Phase 3 harness validation had passed, so this is tracked as a regression and must be resolved before native-client integration is considered healthy.
 
 See [API reference](API.md).
 
@@ -229,7 +230,7 @@ Base Compose creates:
 
 Development/test/production behaviour is expressed through Compose overrides rather than separate application forks.
 
-Production binds Apache to loopback and relies on the Synology reverse proxy for public HTTPS.
+Production binds Apache to loopback and relies on the Synology reverse proxy for public HTTPS. The current deployed path is public `https://skymart.granvillehouse.synology.me:8082` → FRITZ!Box external TCP 8082 to Synology 8442 → DSM HTTPS reverse proxy → `http://127.0.0.1:8082`. DSM terminates TLS with a dedicated Let's Encrypt certificate for the SkyMart hostname.
 
 ## 14. Database migrations
 
