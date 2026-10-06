@@ -3,6 +3,8 @@ set -eu
 cd "$(dirname "$0")/.."
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
 
+sh scripts/check-secrets.sh
+
 command -v git >/dev/null 2>&1 || { echo "FAIL: git is required to prove the deployment revision"; exit 1; }
 [ -z "$(git status --porcelain)" ] || { echo "FAIL: working tree is dirty; commit or discard changes before deployment"; git status --short; exit 1; }
 export SKYMART_BUILD_SHA="$(git rev-parse HEAD)"
