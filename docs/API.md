@@ -6,7 +6,7 @@ Base path: `/api/v1`
 
 Current public origin: `https://skymart.granvillehouse.synology.me:8082`
 
-> Operational status (6 October 2026): the API contract below remains the intended v1 contract, but the deployed `/api/v1/health` route currently returns HTTP 404 both directly on the NAS loopback backend and through the public reverse proxy. Earlier Phase 3 harness validation passed. Treat API routing as a known regression until it is fixed and the harness is rerun.
+> Operational status (6 October 2026): a live `/api/v1/health` 404 was traced to deployment drift—the running `skymart-web` container had an older Apache vhost without the current rewrite rules. The isolated harness passed on current `main`; rebuilding the live web container restored the loopback API health endpoint to HTTP 200 with `{"status":"ok","api":"v1"}`.
 
 ## Principles
 - JSON request/response bodies.
