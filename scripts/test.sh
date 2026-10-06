@@ -7,7 +7,15 @@ cleanup(){ $COMPOSE down -v --remove-orphans >/dev/null 2>&1 || true; }
 trap cleanup EXIT INT TERM
 echo "==> Building isolated test stack";cleanup;$COMPOSE build --pull;$COMPOSE up -d
 echo "==> Waiting for application";i=0
-until curl -fsS "http://127.0.0.1:$SKYMART_TEST_PORT/health.php" >/dev/null;do i=$((i+1));[ "$i" -ge 60 ]&&{$COMPOSE ps;$COMPOSE logs --tail=150;exit 1;};sleep 2;done
+until curl -fsS "http://127.0.0.1:$SKYMART_TEST_PORT/health.php" >/dev/null; do
+  i=$((i+1))
+  if [ "$i" -ge 60 ]; then
+    $COMPOSE ps
+    $COMPOSE logs --tail=150
+    exit 1
+  fi
+  sleep 2
+done
 echo "==> PHP version and syntax checks"
 $COMPOSE exec -T web php -r 'if (PHP_VERSION_ID < 80400) { fwrite(STDERR, "PHP 8.4+ required\n"); exit(1); }'
 $COMPOSE exec -T web sh -c 'find /var/www/skymart -name "*.php" -type f -print0 | xargs -0 -n1 php -l'
