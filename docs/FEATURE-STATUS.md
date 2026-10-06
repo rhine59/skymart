@@ -13,7 +13,7 @@ Status terms:
 | Browser sessions / CSRF | Implemented + tested | Login, registration, logout/access checks |
 | Password hashing | Implemented + tested | PHP password APIs |
 | Versioned migrations | Implemented + tested | 001–005 currently present |
-| API routing / health | Regression open | Earlier Phase 3 harness passed; live `/api/v1/health` returned 404 locally and publicly on 6 Oct 2026 |
+| API routing / health | Implemented + tested | Deployment drift caused a live 404; rebuilding `skymart-web` from current `main` restored local HTTP 200. Full isolated harness passed 6 Oct 2026 |
 | Categories / public listing search | Implemented + tested | API smoke covers categories/pagination validation |
 | Listing create/update/withdraw | Implemented | API/service source present; broader E2E coverage should be added |
 | Native bearer authentication | Implemented | 30-day opaque tokens, hashed at rest |
