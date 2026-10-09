@@ -5,7 +5,7 @@ final class MarketplaceStore: ObservableObject {
     @Published var listings: [Listing] = []
     @Published var loading = false
     @Published var errorMessage: String?
-    private let service: MarketplaceService = SkyMartAPI(baseURL: SkyMartConfiguration.baseURL)
+    private let service: MarketplaceService = SkyMartAPI(baseURL: URL(string: "https://skymart.granvillehouse.synology.me:8082")!)
 
     func refresh() async {
         loading = true
