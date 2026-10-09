@@ -7,12 +7,12 @@ struct MarketplaceView: View {
   ScrollView {
    VStack(alignment:.leading,spacing:20) {
     ZStack(alignment:.bottomLeading) {
-     LinearGradient(colors:[.blue.opacity(.75),.indigo.opacity(.85)],startPoint:.topLeading,endPoint:.bottomTrailing)
-     Image(systemName:"airplane").font(.system(size:110,weight:.thin)).foregroundStyle(.white.opacity(.18)).offset(x:220,y:-18)
+     LinearGradient(colors:[.blue.opacity(0.75),.indigo.opacity(0.85)],startPoint:.topLeading,endPoint:.bottomTrailing)
+     Image(systemName:"airplane").font(.system(size:110,weight:.thin)).foregroundStyle(.white.opacity(0.18)).offset(x:220,y:-18)
      VStack(alignment:.leading,spacing:7) {
-      Text("THE AVIATION MARKETPLACE").font(.caption.bold()).tracking(1.5).foregroundStyle(.white.opacity(.8))
+      Text("THE AVIATION MARKETPLACE").font(.caption.bold()).tracking(1.5).foregroundStyle(.white.opacity(0.8))
       Text("Find your next\naviation adventure").font(.largeTitle.bold()).foregroundStyle(.white)
-      Text("Aircraft • avionics • parts • pilot equipment").font(.subheadline).foregroundStyle(.white.opacity(.85))
+      Text("Aircraft • avionics • parts • pilot equipment").font(.subheadline).foregroundStyle(.white.opacity(0.85))
      }.padding(22)
     }.frame(height:220).clipShape(RoundedRectangle(cornerRadius:24))
     VStack(alignment:.leading,spacing:10) {
@@ -38,12 +38,12 @@ struct MarketplaceView: View {
 }
 struct CategoryChip: View {
  let name:String;let symbol:String;let selected:Bool
- var body:some View { VStack(spacing:7){Image(systemName:symbol).font(.title2);Text(name).font(.caption.bold()).lineLimit(1)}.frame(width:92,height:76).background(selected ? Color.accentColor.opacity(.18):Color(.secondarySystemGroupedBackground)).clipShape(RoundedRectangle(cornerRadius:16)).overlay(RoundedRectangle(cornerRadius:16).stroke(selected ? Color.accentColor:.clear,lineWidth:1.5)) }
+ var body:some View { VStack(spacing:7){Image(systemName:symbol).font(.title2);Text(name).font(.caption.bold()).lineLimit(1)}.frame(width:92,height:76).background(selected ? Color.accentColor.opacity(0.18):Color(.secondarySystemGroupedBackground)).clipShape(RoundedRectangle(cornerRadius:16)).overlay(RoundedRectangle(cornerRadius:16).stroke(selected ? Color.accentColor:.clear,lineWidth:1.5)) }
 }
 struct ListingCard:View {
  let listing:Listing
  var body:some View { VStack(alignment:.leading,spacing:9) {
-  ZStack(alignment:.topTrailing){RoundedRectangle(cornerRadius:14).fill(LinearGradient(colors:[.gray.opacity(.13),.gray.opacity(.28)],startPoint:.top,endPoint:.bottom)).frame(height:125);Image(systemName:listing.symbol).font(.system(size:50,weight:.light)).foregroundStyle(.secondary);if listing.isFavourite{Image(systemName:"heart.fill").foregroundStyle(.red).padding(10)}}
+  ZStack(alignment:.topTrailing){RoundedRectangle(cornerRadius:14).fill(LinearGradient(colors:[.gray.opacity(0.13),.gray.opacity(0.28)],startPoint:.top,endPoint:.bottom)).frame(height:125);Image(systemName:listing.symbol).font(.system(size:50,weight:.light)).foregroundStyle(.secondary);if listing.isFavourite{Image(systemName:"heart.fill").foregroundStyle(.red).padding(10)}}
   Text(listing.title).font(.headline).lineLimit(2).frame(maxWidth:.infinity,alignment:.leading)
   Text(listing.price,format:.currency(code:"GBP").precision(.fractionLength(0))).font(.title3.bold())
   Label(listing.location,systemImage:"mappin").font(.caption).foregroundStyle(.secondary)
