@@ -50,7 +50,7 @@ final class PersonalMarketplaceService {
             $count=count($this->searches($userId));
             if($count>=50) throw new InvalidArgumentException('Maximum 50 saved searches.');
             $s=$this->db->prepare("INSERT INTO saved_searches(user_id,name,query_text,category_slug,enabled,frequency,notify_email,notify_sms,notify_whatsapp) VALUES(?,?,?,?,?,?,?,?,?)");
-            $s->bind_param('issssiiii',$userId,$name,$query,$category,$enabled,$frequency,$email,$sms,$whatsapp);
+            $s->bind_param('isssisiii',$userId,$name,$query,$category,$enabled,$frequency,$email,$sms,$whatsapp);
             $s->execute();$id=(int)$s->insert_id;
         } else {
             if($this->getSearch($userId,$id)===null) return null;
