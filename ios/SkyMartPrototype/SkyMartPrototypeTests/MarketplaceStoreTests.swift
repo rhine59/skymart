@@ -5,6 +5,7 @@ import XCTest
 final class MarketplaceStoreTests: XCTestCase {
     func testSearch() {
         let store = MarketplaceStore()
+        store.listings = Listing.samples
         store.query = "Trig"
         XCTAssertEqual(store.filtered.count, 1)
         XCTAssertEqual(store.filtered.first?.category, "Avionics")
@@ -12,6 +13,7 @@ final class MarketplaceStoreTests: XCTestCase {
 
     func testCategoryFilter() {
         let store = MarketplaceStore()
+        store.listings = Listing.samples
         store.selectedCategory = "Aircraft"
         XCTAssertTrue(store.filtered.allSatisfy { $0.category == "Aircraft" })
     }
