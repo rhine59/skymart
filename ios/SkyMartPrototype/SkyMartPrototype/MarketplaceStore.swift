@@ -2,7 +2,22 @@ import Foundation
 
 @MainActor
 final class MarketplaceStore: ObservableObject {
-    @Published var listings = Listing.samples
+    @Published var listings: [Listing] = []
+    @Published var loading = false
+    @Published var errorMessage: String?
+    private let service: MarketplaceService = SkyMartAPI(baseURL: SkyMartConfiguration.baseURL)
+
+    func refresh() async {
+        loading = true
+        defer { loading = false }
+        do {
+            listings = try await service.fetchListings(query: nil, category: nil)
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to load adverts. Pull down to retry."
+        }
+    }
+
     @Published var query = ""
     @Published var selectedCategory: String?
 
@@ -36,5 +51,5 @@ final class MarketplaceStore: ObservableObject {
                               symbol: categories.first(where: {$0.name == category})?.symbol ?? "shippingbox"), at: 0)
     }
 
-    func reset() { listings = Listing.samples; query = ""; selectedCategory = nil }
+    func reset() { listings = []; query = ""; selectedCategory = nil }
 }
