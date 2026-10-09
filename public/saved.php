@@ -8,7 +8,7 @@ $userId=(int)current_user_id();
 $personal=new PersonalMarketplaceService($link,new ListingService($link));
 $error='';
 if($_SERVER['REQUEST_METHOD']==='POST') {
- if(!csrf_verify((string)($_POST['csrf_token']??''))) {http_response_code(403);exit('Invalid CSRF token');}
+ require_csrf();
  try {
   $action=(string)($_POST['action']??'');$id=(int)($_POST['id']??0);
   if($action==='favourite' && $id>0) $personal->favourite($userId,$id);
