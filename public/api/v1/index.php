@@ -201,6 +201,12 @@ if ($method === 'PATCH' && preg_match('#^listings/(\\d+)$#',$path,$m)) {
     if ($listing === null) api_error('not_found','Listing not found.',404);
     api_response(['data'=>$listing]);
 }
+if ($method === 'PUT' && preg_match('#^listings/(\d+)/images/order$#',$path,$m)) {
+    $body=json_body();$ids=$body['image_ids']??null;
+    if(!is_array($ids)||array_filter($ids,static fn($id)=>!is_int($id)||$id<1))api_error('validation_error','Supply image_ids as positive integers.',422);
+    try{$images->reorder((int)$m[1],api_user_id($auth),$ids);}catch(InvalidArgumentException $e){api_error('validation_error',$e->getMessage(),422);}catch(RuntimeException $e){if($e->getMessage()==='not_found')api_error('not_found','Listing not found.',404);throw $e;}
+    api_response(['data'=>['reordered'=>true]]);
+}
 if ($method === 'POST' && preg_match('#^listings/(\\d+)/images$#',$path,$m)) {
     $type=strtolower(trim(explode(';',(string)($_SERVER['CONTENT_TYPE']??''))[0]));if($type!=='image/jpeg')api_error('unsupported_media_type','Upload a JPEG image.',415);
     $raw=file_get_contents('php://input');if($raw===false)api_error('invalid_image','Unable to read image.',400);
