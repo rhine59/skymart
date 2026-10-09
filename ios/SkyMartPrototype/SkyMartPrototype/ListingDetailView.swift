@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ListingDetailView: View {
     @EnvironmentObject var store: MarketplaceStore
+    @EnvironmentObject var account: AccountSession
+    @State private var favouriteError: String?
     let listingID: UUID
 
     private var listing: Listing? { store.listings.first { $0.id == listingID } }
@@ -18,7 +20,12 @@ struct ListingDetailView: View {
                                 Label(listing.location, systemImage: "mappin.and.ellipse").foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button { store.toggleFavourite(listing) } label: {
+                            Button { Task {
+                                guard account.user != nil else { favouriteError="Sign in to save favourites."; return }
+                                guard let id = listing.serverID else { favouriteError="Advert unavailable."; return }
+                                do { try await account.api.setFavourite(listingID: id, enabled: !listing.isFavourite); store.toggleFavourite(listing) }
+                                catch { favouriteError="Unable to update favourite." }
+                            } } label: {
                                 Image(systemName: listing.isFavourite ? "heart.fill" : "heart")
                                     .font(.title2)
                                     .foregroundStyle(listing.isFavourite ? .red : .primary)
@@ -44,6 +51,7 @@ struct ListingDetailView: View {
                 ContentUnavailableView("Advert unavailable", systemImage: "exclamationmark.triangle")
             }
         }
+        .alert("Favourites", isPresented: Binding(get: { favouriteError != nil }, set: { if !$0 { favouriteError = nil } })) { Button("OK", role: .cancel) {} } message: { Text(favouriteError ?? "") }
         .navigationTitle("Advert")
         .navigationBarTitleDisplayMode(.inline)
     }

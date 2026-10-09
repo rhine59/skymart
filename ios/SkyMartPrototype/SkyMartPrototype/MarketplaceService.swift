@@ -49,6 +49,33 @@ final class SkyMartAPI: MarketplaceService, AuthenticationService {
         return try JSONDecoder().decode(ListingsEnvelope.self,from:data).data.map { Listing(api:$0,baseURL:baseURL) }
     }
 
+    func fetchFavourites() async throws -> [Listing] {
+        let data=try await send(URLRequest(url:baseURL.appending(path:"api/v1/me/favourites")),authenticated:true)
+        return try JSONDecoder().decode(ListingsEnvelope.self,from:data).data.map { Listing(api:$0,baseURL:baseURL) }
+    }
+    func setFavourite(listingID:Int,enabled:Bool) async throws {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/me/favourites/\(listingID)"))
+        request.httpMethod=enabled ? "PUT":"DELETE"
+        _=try await send(request,authenticated:true)
+    }
+    func fetchSavedSearches() async throws -> [SavedSearch] {
+        let data=try await send(URLRequest(url:baseURL.appending(path:"api/v1/me/saved-searches")),authenticated:true)
+        return try JSONDecoder().decode(SavedSearchListEnvelope.self,from:data).data
+    }
+    func saveSearch(id:Int?,name:String,query:String,category:String,enabled:Bool,frequency:String) async throws {
+        let url=id.map { baseURL.appending(path:"api/v1/me/saved-searches/\($0)") } ?? baseURL.appending(path:"api/v1/me/saved-searches")
+        var request=URLRequest(url:url)
+        request.httpMethod=id==nil ? "POST":"PATCH"
+        request.setValue("application/json",forHTTPHeaderField:"Content-Type")
+        request.httpBody=try JSONEncoder().encode(SavedSearchPayload(name:name,query_text:query,category_slug:category,enabled:enabled,frequency:frequency))
+        _=try await send(request,authenticated:true)
+    }
+    func deleteSearch(id:Int) async throws {
+        var request=URLRequest(url:baseURL.appending(path:"api/v1/me/saved-searches/\(id)"))
+        request.httpMethod="DELETE"
+        _=try await send(request,authenticated:true)
+    }
+
     func login(email:String,password:String,deviceName:String="iPhone") async throws -> APIUser {
         var request=URLRequest(url:baseURL.appending(path:"api/v1/auth/login"));request.httpMethod="POST"
         request.setValue("application/json",forHTTPHeaderField:"Content-Type")
@@ -133,4 +160,21 @@ private extension Listing {
             guard let u=URL(string:item.url,relativeTo:baseURL),let t=URL(string:item.thumbnail_url,relativeTo:baseURL) else{return nil};return ListingImage(url:u.absoluteURL,thumbnailURL:t.absoluteURL)
         })
     }
+}
+
+struct SavedSearch: Identifiable, Decodable {
+    let id:Int
+    let name:String
+    let query_text:String
+    let category_slug:String
+    let enabled:Int
+    let frequency:String
+}
+private struct SavedSearchListEnvelope:Decodable { let data:[SavedSearch] }
+private struct SavedSearchPayload:Encodable {
+    let name:String
+    let query_text:String
+    let category_slug:String
+    let enabled:Bool
+    let frequency:String
 }
