@@ -41,6 +41,11 @@ curl -fsS "$BASE/api/v1/categories" | grep -q '"slug":"aircraft"'
 curl -fsS "$BASE/api/v1/listings?per_page=51" | grep -q '"per_page":50'
 BAD_PAGE="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/v1/listings?page=0")"
 [ "$BAD_PAGE" = "422" ] || { echo "FAIL: invalid API pagination returned $BAD_PAGE"; exit 1; }
+echo "==> Public browser catalogue smoke test"
+curl -fsS "$BASE/browse.php" | grep -q "Latest adverts"
+curl -fsS "$BASE/browse.php?q=missing-aviation-item" | grep -q "No adverts found"
+curl -fsS "$BASE/index.php" | grep -q "Browse adverts without signing in"
+echo "PASS: browser catalogue, empty state and sign-in navigation"
 echo "==> HTTP/CSRF/auth smoke test"
 COOKIE="$(mktemp)";PAGE="$(mktemp)"
 curl -fsS -c "$COOKIE" "$BASE/register.php" > "$PAGE";TOKEN="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' "$PAGE"|head -1)";[ -n "$TOKEN" ]||{ echo "FAIL: registration CSRF token missing";exit 1;}
