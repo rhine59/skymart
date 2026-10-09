@@ -48,6 +48,7 @@ function browse_link(array $params): string {
 <p class="text-muted">📍 <?= e($detail['location'] ?? '') ?></p>
 <h2 class="h5">Description</h2><p class="description"><?= e($detail['description']) ?></p>
 <p class="text-muted">Seller: <?= e($detail['seller']['name']) ?></p>
+<?php if(current_user_id()!==null && (int)current_user_id()!==(int)$detail['seller']['id']):?><form method="post" action="enquiries.php" class="mt-3"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="listing_id" value="<?=(int)$detail['id']?>"><label class="form-label w-100">Enquire about buying<textarea name="message" class="form-control" minlength="10" maxlength="2000" rows="3" required placeholder="Ask the seller about availability, condition or viewing arrangements"></textarea></label><button class="btn btn-primary">Send enquiry</button></form><?php elseif(current_user_id()===null):?><p><a href="index.php">Sign in to contact the seller</a></p><?php endif;?>
 <?php if(current_user_id()!==null):?><form method="post" action="saved.php"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="favourite"><input type="hidden" name="id" value="<?=(int)$detail['id']?>"><button class="btn btn-outline-danger">♡ Add to favourites</button></form><?php endif;?>
 </div></div></article>
 <?php else: ?>
