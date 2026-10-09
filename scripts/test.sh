@@ -60,4 +60,11 @@ curl -fsS "$BASE/api/v1/listings?q=Cross%20Client%20Test" | grep -q '"title":"Cr
 curl -fsS "$BASE/browse.php?q=Cross%20Client%20Test" | grep -q 'Cross Client Test Propeller' || { echo "FAIL: web catalogue did not show advert"; exit 1; }
 curl -fsS "$BASE/browse.php?category=aircraft&q=Cross%20Client%20Test" | grep -q 'No adverts found' || { echo "FAIL: category filter did not exclude advert"; exit 1; }
 echo "PASS: created advert appears in shared API and browser, category filtering works"
+echo "==> Personal marketplace lifecycle"
+curl -fsS -b "$COOKIE" -X PUT "$BASE/api/v1/me/favourites/1" | grep -q '"favourited":true'
+curl -fsS -b "$COOKIE" "$BASE/api/v1/me/favourites" | grep -q 'Cross Client Test Propeller'
+curl -fsS -b "$COOKIE" -X DELETE "$BASE/api/v1/me/favourites/1" | grep -q '"favourited":false'
+curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"name":"Test","query_text":"Cross Client","category_slug":"propellers","enabled":true,"frequency":"daily"}' "$BASE/api/v1/me/saved-searches" | grep -q '"name":"Test"'
+curl -fsS -b "$COOKIE" "$BASE/api/v1/me/saved-searches" | grep -q '"name":"Test"'
+echo "PASS: authenticated favourites and saved search creation"
 rm -f "$COOKIE" "$PAGE";echo "PASS: PHP 8.4, API, public-root isolation, migrations, registration and access-control smoke tests"
