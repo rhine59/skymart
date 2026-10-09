@@ -27,7 +27,7 @@ function browse_link(array $params): string {
 <body>
 <header class="border-bottom bg-white"><nav class="container navbar navbar-expand py-3">
 <a class="navbar-brand fw-bold fs-3" href="browse.php">✈ SkyMart</a>
-<div class="ms-auto d-flex gap-2">
+<div class="ms-auto d-flex gap-2"><a class="btn btn-outline-primary" href="browse.php">Buy</a><a class="btn btn-primary" href="sell.php">Sell</a>
 <?php if (current_user_id() !== null): ?><a class="btn btn-outline-primary" href="saved.php">Saved</a><a class="btn btn-outline-primary" href="private.php">My account</a>
 <?php else: ?><a class="btn btn-outline-primary" href="index.php">Sign in</a><a class="btn btn-primary" href="register.php">Register</a><?php endif; ?>
 </div></nav></header>
