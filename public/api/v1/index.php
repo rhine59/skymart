@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 3) . '/bootstrap.php';
 require_once dirname(__DIR__, 3) . '/src/ListingService.php';
+require_once dirname(__DIR__, 3) . '/src/PersonalMarketplaceService.php';
 require_once dirname(__DIR__, 3) . '/src/AuthService.php';
 require_once dirname(__DIR__, 3) . '/src/AccountService.php';
 require_once dirname(__DIR__, 3) . '/src/AdminAccountService.php';
@@ -67,6 +68,7 @@ function positive_int(mixed $value, int $default, int $max): int {
 $method=$_SERVER['REQUEST_METHOD'];
 $path=trim((string)($_SERVER['PATH_INFO'] ?? ''),'/');
 $service=new ListingService($link);
+$personal=new PersonalMarketplaceService($link,$service);
 $auth=new AuthService($link);
 $accounts=new AccountService($link);
 $adminAccounts=new AdminAccountService($link);
@@ -130,6 +132,50 @@ if ($method === 'PATCH' && preg_match('#^admin/users/(\\d+)/status$#',$path,$m))
 }
 if ($method === 'POST' && preg_match('#^admin/users/(\\d+)/revoke-devices$#',$path,$m)) {
     api_admin_id($auth,$accounts);$adminAccounts->revokeDevices((int)$m[1]);api_response(['data'=>['revoked'=>true]]);
+}
+
+if ($method === 'GET' && $path === 'me/favourites') api_response(['data'=>$personal->favourites(api_user_id($auth))]);
+if (preg_match('#^me/favourites/(\\d+)$#',$path,$m)) {
+    $userId=api_user_id($auth);$listingId=(int)$m[1];
+    if ($method==='PUT') {
+        if(!$personal->favourite($userId,$listingId)) api_error('not_found','Advert not found.',404);
+        api_response(['data'=>['listing_id'=>$listingId,'favourited'=>true]]);
+    }
+    if ($method==='DELETE') {
+        $personal->unfavourite($userId,$listingId);
+        api_response(['data'=>['listing_id'=>$listingId,'favourited'=>false]]);
+    }
+}
+if ($method==='GET' && $path==='me/saved-searches') api_response(['data'=>$personal->searches(api_user_id($auth))]);
+if ($method==='POST' && $path==='me/saved-searches') {
+    try { $saved=$personal->saveSearch(api_user_id($auth),null,json_body()); }
+    catch(InvalidArgumentException $e) { api_error('validation_error',$e->getMessage(),422); }
+    api_response(['data'=>$saved],201);
+}
+if (preg_match('#^me/saved-searches/(\\d+)(/results)?$#',$path,$m)) {
+    $userId=api_user_id($auth);$id=(int)$m[1];$suffix=$m[2]??'';
+    if($method==='GET' && $suffix==='/results') {
+        $result=$personal->results($userId,$id);
+        if($result===null) api_error('not_found','Saved search not found.',404);
+        api_response($result);
+    }
+    if($suffix==='') {
+        if($method==='GET') {
+            $saved=$personal->getSearch($userId,$id);
+            if($saved===null) api_error('not_found','Saved search not found.',404);
+            api_response(['data'=>$saved]);
+        }
+        if($method==='PATCH') {
+            try { $saved=$personal->saveSearch($userId,$id,json_body()); }
+            catch(InvalidArgumentException $e) { api_error('validation_error',$e->getMessage(),422); }
+            if($saved===null) api_error('not_found','Saved search not found.',404);
+            api_response(['data'=>$saved]);
+        }
+        if($method==='DELETE') {
+            $personal->deleteSearch($userId,$id);
+            api_response(['data'=>['deleted'=>true]]);
+        }
+    }
 }
 
 if ($method === 'GET' && $path === 'listings') {
