@@ -7,7 +7,7 @@ struct SkyMartPrototypeApp: App {
 
     init() {
         // Replace with the production HTTPS SkyMart origin at deployment time.
-        let api = SkyMartAPI(baseURL: URL(string: "https://example.invalid")!)
+        let api = SkyMartAPI(baseURL: URL(string: "https://skymart.granvillehouse.synology.me:8082")!)
         _account = StateObject(wrappedValue: AccountSession(api: api))
     }
 
