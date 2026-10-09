@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once dirname(__DIR__) . '/src/ListingService.php';
+require_once dirname(__DIR__) . '/src/PersonalMarketplaceService.php';
 $service = new ListingService($link);
 $categories = $service->categories();
 $q = mb_substr(trim((string)($_GET['q'] ?? '')), 0, 120);
@@ -14,6 +15,8 @@ foreach ($categories as $item) {
 }
 if ($selected === null) $category = '';
 $results = $service->search($q, $category, $page, 20);
+$savedSearches=[];
+if(current_user_id()!==null){$savedSearches=(new PersonalMarketplaceService($link,$service))->searches((int)current_user_id());}
 $detailId = filter_var($_GET['listing'] ?? null, FILTER_VALIDATE_INT);
 $detail = $detailId && $detailId > 0 ? $service->find($detailId) : null;
 function browse_link(array $params): string {
@@ -26,10 +29,10 @@ function browse_link(array $params): string {
 <link rel="stylesheet" href="assets/marketplace.css"></head>
 <body>
 <header class="border-bottom bg-white"><nav class="container navbar navbar-expand py-3">
-<a class="navbar-brand fw-bold fs-3" href="browse.php">✈ SkyMart</a>
+<a class="navbar-brand fw-bold fs-3" href="index.php">✈ SkyMart</a>
 <div class="ms-auto d-flex gap-2"><a class="btn btn-outline-primary" href="browse.php">Buy</a><a class="btn btn-primary" href="sell.php">Sell</a>
 <?php if (current_user_id() !== null): ?><a class="btn btn-outline-primary" href="saved.php">Saved</a><a class="btn btn-outline-primary" href="private.php">My account</a>
-<?php else: ?><a class="btn btn-outline-primary" href="index.php">Sign in</a><a class="btn btn-primary" href="register.php">Register</a><?php endif; ?>
+<?php else: ?><a class="btn btn-outline-primary" href="login.php">Sign in</a><a class="btn btn-primary" href="register.php">Register</a><?php endif; ?>
 </div></nav></header>
 <main class="container py-4">
 <?php if ($detail !== null): ?>
@@ -48,7 +51,7 @@ function browse_link(array $params): string {
 <p class="text-muted">📍 <?= e($detail['location'] ?? '') ?></p>
 <h2 class="h5">Description</h2><p class="description"><?= e($detail['description']) ?></p>
 <p class="text-muted">Seller: <?= e($detail['seller']['name']) ?></p>
-<?php if(current_user_id()!==null && (int)current_user_id()!==(int)$detail['seller']['id']):?><form method="post" action="enquiries.php" class="mt-3"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="listing_id" value="<?=(int)$detail['id']?>"><label class="form-label w-100">Enquire about buying<textarea name="message" class="form-control" minlength="10" maxlength="2000" rows="3" required placeholder="Ask the seller about availability, condition or viewing arrangements"></textarea></label><button class="btn btn-primary">Send enquiry</button></form><?php elseif(current_user_id()===null):?><p><a href="index.php">Sign in to contact the seller</a></p><?php endif;?>
+<?php if(current_user_id()!==null && (int)current_user_id()!==(int)$detail['seller']['id']):?><form method="post" action="enquiries.php" class="mt-3"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="listing_id" value="<?=(int)$detail['id']?>"><label class="form-label w-100">Enquire about buying<textarea name="message" class="form-control" minlength="10" maxlength="2000" rows="3" required placeholder="Ask the seller about availability, condition or viewing arrangements"></textarea></label><button class="btn btn-primary">Send enquiry</button></form><?php elseif(current_user_id()===null):?><p><a href="login.php">Sign in to contact the seller</a></p><?php endif;?>
 <?php if(current_user_id()!==null):?><form method="post" action="saved.php"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="favourite"><input type="hidden" name="id" value="<?=(int)$detail['id']?>"><button class="btn btn-outline-danger">♡ Add to favourites</button></form><?php endif;?>
 </div></div></article>
 <?php else: ?>
@@ -56,12 +59,13 @@ function browse_link(array $params): string {
 <p class="text-uppercase small fw-bold mb-2">The aviation marketplace</p>
 <h1 class="display-5 fw-bold">Find your next aviation adventure</h1>
 <p class="mb-0">Aircraft · Avionics · Parts · Pilot equipment</p></section>
-<form class="row g-2 mb-4" method="get" action="browse.php" role="search">
-<div class="col-12 col-md-7"><label for="q" class="visually-hidden">Search adverts</label><input id="q" name="q" class="form-control form-control-lg" value="<?= e($q) ?>" placeholder="Search aircraft, avionics, parts…"></div>
-<div class="col-8 col-md-3"><label for="category" class="visually-hidden">Category</label><select id="category" name="category" class="form-select form-select-lg"><option value="">All categories</option>
-<?php foreach ($categories as $item): ?><option value="<?= e($item['slug']) ?>" <?= $category === $item['slug'] ? 'selected' : '' ?>><?= e($item['name']) ?></option><?php endforeach; ?></select></div>
-<div class="col-4 col-md-2"><button class="btn btn-primary btn-lg w-100" type="submit">Search</button></div>
-</form>
+<form class="row g-2 mb-3" method="get" action="browse.php" role="search">
+<div class="col-9 col-md-10"><label for="q" class="visually-hidden">Search adverts</label><input id="q" name="q" class="form-control form-control-lg" value="<?= e($q) ?>" placeholder="Search aircraft, avionics, parts…"><input type="hidden" name="category" value="<?=e($category)?>"></div>
+<div class="col-3 col-md-2"><button class="btn btn-primary btn-lg w-100" type="submit">Search</button></div></form>
+<div class="d-flex flex-wrap gap-2 mb-4" aria-label="Advert categories"><a class="btn <?= $category===''?'btn-primary':'btn-outline-primary' ?>" href="<?=e(browse_link(['q'=>$q]))?>">All categories</a><?php foreach($categories as $item):?><a class="btn <?= $category===$item['slug']?'btn-primary':'btn-outline-primary' ?>" href="<?=e(browse_link(['q'=>$q,'category'=>$item['slug']]))?>"><?=e($item['name'])?></a><?php endforeach;?></div>
+<?php if(current_user_id()!==null):?>
+<div class="d-flex flex-wrap gap-2 align-items-center mb-4"><strong>My saved searches:</strong><?php foreach($savedSearches as $saved):?><a class="btn btn-sm btn-outline-secondary" href="<?=e(browse_link(['q'=>$saved['query_text'],'category'=>$saved['category_slug']]))?>"><?=e($saved['name'])?></a><?php endforeach;?><a href="saved.php" class="btn btn-sm btn-outline-primary">Manage saved searches</a><form action="saved.php" method="post" class="d-inline-flex gap-2"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="save"><input type="hidden" name="query_text" value="<?=e($q)?>"><input type="hidden" name="category_slug" value="<?=e($category)?>"><input type="hidden" name="frequency" value="daily"><input type="hidden" name="enabled" value="1"><input class="form-control form-control-sm" name="name" maxlength="120" required placeholder="Name this search"><button class="btn btn-sm btn-primary" type="submit">Save filters</button></form></div>
+<?php endif;?>
 <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h4 mb-0">Latest adverts</h2><span class="text-muted"><?= (int)$results['meta']['total'] ?> adverts</span></div>
 <?php if (!$results['data']): ?><div class="alert alert-light border">No adverts found. Try another search or category.</div><?php endif; ?>
 <div class="row g-3"><?php foreach ($results['data'] as $listing): ?>
