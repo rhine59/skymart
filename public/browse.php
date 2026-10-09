@@ -28,7 +28,7 @@ function browse_link(array $params): string {
 <header class="border-bottom bg-white"><nav class="container navbar navbar-expand py-3">
 <a class="navbar-brand fw-bold fs-3" href="browse.php">✈ SkyMart</a>
 <div class="ms-auto d-flex gap-2">
-<?php if (current_user_id() !== null): ?><a class="btn btn-outline-primary" href="private.php">My account</a>
+<?php if (current_user_id() !== null): ?><a class="btn btn-outline-primary" href="saved.php">Saved</a><a class="btn btn-outline-primary" href="private.php">My account</a>
 <?php else: ?><a class="btn btn-outline-primary" href="index.php">Sign in</a><a class="btn btn-primary" href="register.php">Register</a><?php endif; ?>
 </div></nav></header>
 <main class="container py-4">
@@ -48,6 +48,7 @@ function browse_link(array $params): string {
 <p class="text-muted">📍 <?= e($detail['location'] ?? '') ?></p>
 <h2 class="h5">Description</h2><p class="description"><?= e($detail['description']) ?></p>
 <p class="text-muted">Seller: <?= e($detail['seller']['name']) ?></p>
+<?php if(current_user_id()!==null):?><form method="post" action="saved.php"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="favourite"><input type="hidden" name="id" value="<?=(int)$detail['id']?>"><button class="btn btn-outline-danger">♡ Add to favourites</button></form><?php endif;?>
 </div></div></article>
 <?php else: ?>
 <section class="hero rounded-4 p-4 p-md-5 mb-4">
