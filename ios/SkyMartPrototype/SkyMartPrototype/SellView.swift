@@ -5,7 +5,11 @@ import UIKit
 struct SellView:View {
  @EnvironmentObject var store:MarketplaceStore
  @EnvironmentObject var account:AccountSession
- @State private var title="",category="Aircraft",price="",location="",details=""
+ @State private var title = ""
+ @State private var category = "Aircraft"
+ @State private var price = ""
+ @State private var location = ""
+ @State private var details = ""
  @State private var picks:[PhotosPickerItem]=[];@State private var photos:[SelectedPhoto]=[]
  @State private var publishing=false;@State private var progress=0.0;@State private var message:String?
 
