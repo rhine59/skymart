@@ -25,6 +25,9 @@ struct MarketplaceView: View {
      }
     }
     HStack { Text(store.selectedCategory ?? "Latest adverts").font(.title2.bold()); Spacer(); Text("\(store.filtered.count) adverts").font(.caption).foregroundStyle(.secondary) }
+    if store.loading { ProgressView("Loading adverts…").frame(maxWidth:.infinity) }
+    if let error = store.errorMessage { ContentUnavailableView(error, systemImage:"wifi.exclamationmark") }
+    if !store.loading && store.errorMessage == nil && store.filtered.isEmpty { ContentUnavailableView("No adverts found", systemImage:"magnifyingglass") }
     LazyVGrid(columns:columns,spacing:14) {
      ForEach(store.filtered){listing in NavigationLink(value:listing){ListingCard(listing:listing)}.buttonStyle(.plain)}
     }
@@ -33,6 +36,8 @@ struct MarketplaceView: View {
   .background(Color(.systemGroupedBackground))
   .navigationTitle("SkyMart").navigationBarTitleDisplayMode(.inline)
   .searchable(text:$store.query,prompt:"Aircraft, avionics, parts…")
+  .task { await store.refresh() }
+  .refreshable { await store.refresh() }
   .navigationDestination(for:Listing.self){ListingDetailView(listingID:$0.id)}
  }
 }
