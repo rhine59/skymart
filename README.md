@@ -28,6 +28,7 @@ Apache exposes only `public/`. Application code, migrations, configuration and u
 | [API reference](docs/API.md) | Current `/api/v1` contract |
 | [Security guide](docs/SECURITY.md) | Security controls, risks and production requirements |
 | [Feature status](docs/FEATURE-STATUS.md) | Implemented/tested/pending capability matrix |
+| [Web/iPhone parity](docs/CLIENT-PARITY.md) | Shared-data contract, capability audit and cross-client acceptance checklist |
 | [Changelog](CHANGELOG.md) | Repository change history |
 
 ## Development and validation
