@@ -53,4 +53,11 @@ EMAIL="test@example.invalid"
 curl -fsS -b "$COOKIE" -c "$COOKIE" -L --data-urlencode "csrf_token=$TOKEN" --data-urlencode "name=SkyMart Test User" --data-urlencode "email=$EMAIL" --data-urlencode "phone=" --data-urlencode "password=Test-password-12345" --data-urlencode "password_confirm=Test-password-12345" "$BASE/register.php"|grep -q "Secure account foundation is active"
 COUNT="$($COMPOSE exec -T db mariadb -N -uskymart -pskymart-dev-only skymart -e "SELECT COUNT(*) FROM users WHERE email='$EMAIL';")";[ "$COUNT" = "1" ]||{ echo "FAIL: registration did not create user";exit 1;}
 PRIVATE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/private.php")";[ "$PRIVATE_CODE" = "302" ]||{ echo "FAIL: unauthenticated private page returned $PRIVATE_CODE";exit 1;}
+echo "==> Shared advert visibility across API and browser"
+CREATE_RESPONSE="$(curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"title":"Cross Client Test Propeller","description":"A test advert to verify shared marketplace visibility.","category":"propellers","price_gbp":275,"location":"Skipton"}' "$BASE/api/v1/listings")"
+echo "$CREATE_RESPONSE" | grep -q '"title":"Cross Client Test Propeller"' || { echo "FAIL: listing creation failed"; exit 1; }
+curl -fsS "$BASE/api/v1/listings?q=Cross%20Client%20Test" | grep -q '"title":"Cross Client Test Propeller"' || { echo "FAIL: API catalogue did not show advert"; exit 1; }
+curl -fsS "$BASE/browse.php?q=Cross%20Client%20Test" | grep -q 'Cross Client Test Propeller' || { echo "FAIL: web catalogue did not show advert"; exit 1; }
+curl -fsS "$BASE/browse.php?category=aircraft&q=Cross%20Client%20Test" | grep -q 'No adverts found' || { echo "FAIL: category filter did not exclude advert"; exit 1; }
+echo "PASS: created advert appears in shared API and browser, category filtering works"
 rm -f "$COOKIE" "$PAGE";echo "PASS: PHP 8.4, API, public-root isolation, migrations, registration and access-control smoke tests"
