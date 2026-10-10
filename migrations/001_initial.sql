@@ -19,14 +19,14 @@ CREATE TABLE IF NOT EXISTS categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO categories (name, slug) VALUES
-('Aircraft','aircraft'),
-('Engines','engines'),
-('Propellers','propellers'),
+('Flexwing','flexwing'),
 ('Avionics','avionics'),
-('Instruments','instruments'),
+('Services','services'),
 ('Parts','parts'),
-('Pilot Equipment','pilot-equipment'),
-('Miscellaneous','miscellaneous');
+('Miscellaneous','miscellaneous'),
+('Aircraft','aircraft'),
+('Instruments','instruments'),
+('Pilot Equipment','pilot-equipment');
 
 CREATE TABLE IF NOT EXISTS listings (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

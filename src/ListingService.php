@@ -7,7 +7,7 @@ final class ListingService
 
     public function categories(): array
     {
-        $result = $this->db->query('SELECT id, name, slug FROM categories ORDER BY name');
+        $result = $this->db->query('SELECT id, name, slug FROM categories ORDER BY FIELD(slug,'flexwing','avionics','services','parts','miscellaneous','aircraft','instruments','pilot-equipment'), name');
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

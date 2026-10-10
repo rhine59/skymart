@@ -56,7 +56,7 @@ curl -fsS -b "$COOKIE" -c "$COOKIE" -L --data-urlencode "csrf_token=$TOKEN" --da
 COUNT="$($COMPOSE exec -T db mariadb -N -uskymart -pskymart-dev-only skymart -e "SELECT COUNT(*) FROM users WHERE email='$EMAIL';")";[ "$COUNT" = "1" ]||{ echo "FAIL: registration did not create user";exit 1;}
 PRIVATE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/private.php")";[ "$PRIVATE_CODE" = "302" ]||{ echo "FAIL: unauthenticated private page returned $PRIVATE_CODE";exit 1;}
 echo "==> Shared advert visibility across API and browser"
-CREATE_RESPONSE="$(curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"title":"Cross Client Test Propeller","description":"A test advert to verify shared marketplace visibility.","category":"propellers","price_gbp":275,"location":"Skipton"}' "$BASE/api/v1/listings")"
+CREATE_RESPONSE="$(curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"title":"Cross Client Test Propeller","description":"A test advert to verify shared marketplace visibility.","category":"parts","price_gbp":275,"location":"Skipton"}' "$BASE/api/v1/listings")"
 echo "$CREATE_RESPONSE" | grep -q '"title":"Cross Client Test Propeller"' || { echo "FAIL: listing creation failed"; exit 1; }
 curl -fsS "$BASE/api/v1/listings?q=Cross%20Client%20Test" | grep -q '"title":"Cross Client Test Propeller"' || { echo "FAIL: API catalogue did not show advert"; exit 1; }
 curl -fsS "$BASE/browse.php?q=Cross%20Client%20Test" | grep -q 'Cross Client Test Propeller' || { echo "FAIL: web catalogue did not show advert"; exit 1; }
@@ -66,7 +66,7 @@ echo "==> Personal marketplace lifecycle"
 curl -fsS -b "$COOKIE" -X PUT "$BASE/api/v1/me/favourites/1" | grep -q '"favourited":true'
 curl -fsS -b "$COOKIE" "$BASE/api/v1/me/favourites" | grep -q 'Cross Client Test Propeller'
 curl -fsS -b "$COOKIE" -X DELETE "$BASE/api/v1/me/favourites/1" | grep -q '"favourited":false'
-curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"name":"Test","query_text":"Cross Client","category_slug":"propellers","enabled":true,"frequency":"daily"}' "$BASE/api/v1/me/saved-searches" | grep -q '"name":"Test"'
+curl -fsS -b "$COOKIE" -H 'Content-Type: application/json' -d '{"name":"Test","query_text":"Cross Client","category_slug":"parts","enabled":true,"frequency":"daily"}' "$BASE/api/v1/me/saved-searches" | grep -q '"name":"Test"'
 curl -fsS -b "$COOKIE" "$BASE/api/v1/me/saved-searches" | grep -q '"name":"Test"'
 echo "PASS: authenticated favourites and saved search creation"
 rm -f "$COOKIE" "$PAGE";echo "PASS: PHP 8.4, API, public-root isolation, migrations, registration and access-control smoke tests"
