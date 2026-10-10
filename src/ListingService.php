@@ -37,7 +37,7 @@ final class ListingService
         $total = (int)$count->get_result()->fetch_assoc()['total'];
 
         $offset = ($page - 1) * $perPage;
-        $sql = "SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.status,l.created_at,l.expires_at,
+        $sql = "SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.map_lat,l.map_lon,l.status,l.created_at,l.expires_at,
                        c.id category_id,c.name category_name,c.slug category_slug,
                        u.id seller_id,u.name seller_name
                 FROM listings l
@@ -58,7 +58,7 @@ final class ListingService
 
     public function find(int $id): ?array
     {
-        $stmt = $this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.status,l.created_at,l.expires_at,
+        $stmt = $this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.map_lat,l.map_lon,l.status,l.created_at,l.expires_at,
                                             c.id category_id,c.name category_name,c.slug category_slug,
                                             u.id seller_id,u.name seller_name
                                      FROM listings l JOIN categories c ON c.id=l.category_id JOIN users u ON u.id=l.user_id
@@ -72,10 +72,13 @@ final class ListingService
     {
         $categoryId=$this->categoryId($input['category']);
         $input+=['contact_name'=>'','contact_email'=>'','contact_phone'=>''];
+        $lat=($input['map_lat']??'')===''?null:(float)$input['map_lat'];
+        $lon=($input['map_lon']??'')===''?null:(float)$input['map_lon'];
+        if (($lat===null)!==($lon===null) || ($lat!==null && (!is_finite($lat)||$lat < -90||$lat > 90)) || ($lon!==null && (!is_finite($lon)||$lon < -180||$lon > 180))) throw new InvalidArgumentException('Enter valid latitude and longitude together.');
         $duration=(int)($input['duration_days']??30);
         if(!in_array($duration,[30,60,90],true))throw new InvalidArgumentException('Invalid duration.');
-        $stmt=$this->db->prepare("INSERT INTO listings (user_id,category_id,title,description,price_gbp,location,status,duration_days,contact_name,contact_email,contact_phone,payment_status,published_at,expires_at) VALUES (?,?,?,?,?,?,'active',?,?,?,?,'waived',UTC_TIMESTAMP(),DATE_ADD(UTC_TIMESTAMP(),INTERVAL ? DAY))");
-        $stmt->bind_param('iissdsisssi',$userId,$categoryId,$input['title'],$input['description'],$input['price_gbp'],$input['location'],$duration,$input['contact_name'],$input['contact_email'],$input['contact_phone'],$duration);
+        $stmt=$this->db->prepare("INSERT INTO listings (user_id,category_id,title,description,price_gbp,location,status,duration_days,contact_name,contact_email,contact_phone,payment_status,published_at,expires_at,map_lat,map_lon) VALUES (?,?,?,?,?,?,'active',?,?,?,?,'waived',UTC_TIMESTAMP(),DATE_ADD(UTC_TIMESTAMP(),INTERVAL ? DAY),?,?)");
+        $stmt->bind_param('iissdsisssidd',$userId,$categoryId,$input['title'],$input['description'],$input['price_gbp'],$input['location'],$duration,$input['contact_name'],$input['contact_email'],$input['contact_phone'],$duration,$lat,$lon);
         $stmt->execute();
         return $this->findOwned((int)$stmt->insert_id,$userId);
     }
@@ -85,10 +88,13 @@ final class ListingService
         if ($this->findOwned($id,$userId) === null) return null;
         $categoryId=$this->categoryId($input['category']);
         $input+=['contact_name'=>'','contact_email'=>'','contact_phone'=>''];
+        $lat=($input['map_lat']??'')===''?null:(float)$input['map_lat'];
+        $lon=($input['map_lon']??'')===''?null:(float)$input['map_lon'];
+        if (($lat===null)!==($lon===null) || ($lat!==null && (!is_finite($lat)||$lat < -90||$lat > 90)) || ($lon!==null && (!is_finite($lon)||$lon < -180||$lon > 180))) throw new InvalidArgumentException('Enter valid latitude and longitude together.');
         $duration=(int)($input['duration_days']??30);
         if(!in_array($duration,[30,60,90],true))throw new InvalidArgumentException('Invalid duration.');
-        $stmt=$this->db->prepare("UPDATE listings SET category_id=?,title=?,description=?,price_gbp=?,location=?,contact_name=?,contact_email=?,contact_phone=? WHERE id=? AND user_id=? AND status IN ('draft','active')");
-        $stmt->bind_param('issdssssii',$categoryId,$input['title'],$input['description'],$input['price_gbp'],$input['location'],$input['contact_name'],$input['contact_email'],$input['contact_phone'],$id,$userId);
+        $stmt=$this->db->prepare("UPDATE listings SET category_id=?,title=?,description=?,price_gbp=?,location=?,contact_name=?,contact_email=?,contact_phone=?,map_lat=?,map_lon=? WHERE id=? AND user_id=? AND status IN ('draft','active')");
+        $stmt->bind_param('issdssssddii',$categoryId,$input['title'],$input['description'],$input['price_gbp'],$input['location'],$input['contact_name'],$input['contact_email'],$input['contact_phone'],$lat,$lon,$id,$userId);
         $stmt->execute();
         return $this->findOwned($id,$userId);
     }
@@ -108,7 +114,7 @@ final class ListingService
 
     public function mine(int $userId): array
     {
-        $stmt=$this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.status,l.created_at,l.expires_at,l.duration_days,l.contact_name,l.contact_email,l.contact_phone,
+        $stmt=$this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.map_lat,l.map_lon,l.status,l.created_at,l.expires_at,l.duration_days,l.contact_name,l.contact_email,l.contact_phone,
             c.id category_id,c.name category_name,c.slug category_slug,u.id seller_id,u.name seller_name
             FROM listings l JOIN categories c ON c.id=l.category_id JOIN users u ON u.id=l.user_id
             WHERE l.user_id=? ORDER BY l.created_at DESC,l.id DESC");
@@ -118,7 +124,7 @@ final class ListingService
 
     private function findOwned(int $id,int $userId): ?array
     {
-        $stmt=$this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.status,l.created_at,l.expires_at,l.duration_days,l.contact_name,l.contact_email,l.contact_phone,
+        $stmt=$this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.map_lat,l.map_lon,l.status,l.created_at,l.expires_at,l.duration_days,l.contact_name,l.contact_email,l.contact_phone,
             c.id category_id,c.name category_name,c.slug category_slug,u.id seller_id,u.name seller_name
             FROM listings l JOIN categories c ON c.id=l.category_id JOIN users u ON u.id=l.user_id
             WHERE l.id=? AND l.user_id=? LIMIT 1");
@@ -146,7 +152,7 @@ final class ListingService
             'id'=>(int)$r['id'],'title'=>$r['title'],
             'category'=>['id'=>(int)$r['category_id'],'name'=>$r['category_name'],'slug'=>$r['category_slug']],
             'price_gbp'=>$r['price_gbp'] === null ? null : (float)$r['price_gbp'],
-            'location'=>$r['location'],'description'=>$r['description'],'status'=>$r['status'],
+            'location'=>$r['location'],'map_lat'=>isset($r['map_lat'])?(float)$r['map_lat']:null,'map_lon'=>isset($r['map_lon'])?(float)$r['map_lon']:null,'description'=>$r['description'],'status'=>$r['status'],
             'seller'=>['id'=>(int)$r['seller_id'],'name'=>$r['seller_name']],
             'duration_days'=>isset($r['duration_days'])?(int)$r['duration_days']:30,'contact_name'=>$r['contact_name']??null,'contact_email'=>$r['contact_email']??null,'contact_phone'=>$r['contact_phone']??null,
             'images'=>$this->images((int)$r['id']),'created_at'=>$r['created_at'],'expires_at'=>$r['expires_at']
