@@ -73,6 +73,8 @@ final class PersonalMarketplaceService {
     public function results(int $userId,int $id): ?array {
         $search=$this->getSearch($userId,$id);
         if($search===null) return null;
+        $criteria=json_decode((string)($search['criteria_json']??''),true);
+        if(is_array($criteria)) return $this->listings->searchAdvanced($criteria,1,50);
         return $this->listings->search($search['query_text']?:null,$search['category_slug']?:null,1,50);
     }
 }
