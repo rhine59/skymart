@@ -23,11 +23,11 @@ final class PersonalMarketplaceService {
         $s->bind_param('ii',$userId,$listingId);$s->execute();
     }
     public function searches(int $userId): array {
-        $s=$this->db->prepare("SELECT id,name,query_text,category_slug,enabled,frequency,notify_email,notify_sms,notify_whatsapp,created_at,updated_at FROM saved_searches WHERE user_id=? ORDER BY updated_at DESC,id DESC");
+        $s=$this->db->prepare("SELECT id,name,query_text,category_slug,enabled,frequency,notify_email,notify_sms,notify_whatsapp,criteria_json,created_at,updated_at FROM saved_searches WHERE user_id=? ORDER BY updated_at DESC,id DESC");
         $s->bind_param('i',$userId);$s->execute();return $s->get_result()->fetch_all(MYSQLI_ASSOC);
     }
     public function getSearch(int $userId,int $id): ?array {
-        $s=$this->db->prepare("SELECT id,name,query_text,category_slug,enabled,frequency,notify_email,notify_sms,notify_whatsapp,created_at,updated_at FROM saved_searches WHERE user_id=? AND id=?");
+        $s=$this->db->prepare("SELECT id,name,query_text,category_slug,enabled,frequency,notify_email,notify_sms,notify_whatsapp,criteria_json,created_at,updated_at FROM saved_searches WHERE user_id=? AND id=?");
         $s->bind_param('ii',$userId,$id);$s->execute();return $s->get_result()->fetch_assoc() ?: null;
     }
     public function saveSearch(int $userId,?int $id,array $input): ?array {
@@ -58,6 +58,13 @@ final class PersonalMarketplaceService {
             $s->bind_param('sssisiiiii',$name,$query,$category,$enabled,$frequency,$email,$sms,$whatsapp,$id,$userId);$s->execute();
         }
         return $this->getSearch($userId,$id);
+    }
+    public function saveAdvancedSearch(int $userId,string $name,array $criteria): void {
+        if(mb_strlen($name)<1||mb_strlen($name)>120)throw new InvalidArgumentException('Enter a search name (up to 120 characters).');
+        if(count($this->searches($userId))>=50)throw new InvalidArgumentException('Maximum 50 saved searches.');
+        $json=json_encode($criteria,JSON_THROW_ON_ERROR);$query=implode(' ',($criteria['terms']??[]));$category=$criteria['category']??'';
+        $s=$this->db->prepare("INSERT INTO saved_searches(user_id,name,query_text,category_slug,enabled,frequency,criteria_json) VALUES(?,?,?,?,1,'daily',?)");
+        $s->bind_param('issss',$userId,$name,$query,$category,$json);$s->execute();
     }
     public function deleteSearch(int $userId,int $id): void {
         $s=$this->db->prepare("DELETE FROM saved_searches WHERE user_id=? AND id=?");

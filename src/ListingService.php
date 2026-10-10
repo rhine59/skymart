@@ -56,6 +56,19 @@ final class ListingService
         return ['data'=>$data,'meta'=>['page'=>$page,'per_page'=>$perPage,'total'=>$total]];
     }
 
+    public function searchAdvanced(array $filters, int $page=1, int $perPage=20): array
+    {
+        $where=["l.status='active'",'(l.expires_at IS NULL OR l.expires_at > UTC_TIMESTAMP())'];$types='';$params=[];
+        if(!empty($filters['category'])){$where[]='c.slug=?';$types.='s';$params[]=$filters['category'];}
+        foreach(($filters['terms']??[]) as $term){$where[]='(l.title LIKE ? OR l.description LIKE ? OR l.location LIKE ?)';$types.='sss';$like='%'.$term.'%';array_push($params,$like,$like,$like);}
+        if(isset($filters['max_price'])){$where[]='l.price_gbp<=?';$types.='d';$params[]=(float)$filters['max_price'];}
+        if(isset($filters['min_price'])){$where[]='l.price_gbp>=?';$types.='d';$params[]=(float)$filters['min_price'];}
+        $from=' FROM listings l JOIN categories c ON c.id=l.category_id JOIN users u ON u.id=l.user_id WHERE '.implode(' AND ',$where);
+        $stmt=$this->db->prepare('SELECT COUNT(*) total'.$from);if($types!=='')$stmt->bind_param($types,...$params);$stmt->execute();$total=(int)$stmt->get_result()->fetch_assoc()['total'];
+        $stmt=$this->db->prepare('SELECT l.*,c.id category_id,c.name category_name,c.slug category_slug,u.id seller_id,u.name seller_name'.$from.' ORDER BY l.created_at DESC,l.id DESC LIMIT ? OFFSET ?');$types.='ii';$params[]=$perPage;$params[]=($page-1)*$perPage;$stmt->bind_param($types,...$params);$stmt->execute();
+        return ['data'=>array_map(fn($r)=>$this->shape($r),$stmt->get_result()->fetch_all(MYSQLI_ASSOC)),'meta'=>['total'=>$total,'page'=>$page]];
+    }
+
     public function find(int $id): ?array
     {
         $stmt = $this->db->prepare("SELECT l.id,l.title,l.description,l.price_gbp,l.location,l.map_lat,l.map_lon,l.status,l.created_at,l.expires_at,

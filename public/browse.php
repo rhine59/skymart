@@ -62,6 +62,7 @@ function browse_link(array $params): string {
 <?php if(current_user_id()!==null):?><form method="post" action="saved.php"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="favourite"><input type="hidden" name="id" value="<?=(int)$detail['id']?>"><button class="btn btn-outline-danger">♡ Add to favourites</button></form><?php endif;?>
 </div></div></article>
 <?php else: ?>
+<p><a class="btn btn-outline-primary" href="search-assistant.php">Natural language search · Refine and save searches</a></p>
 <section class="hero rounded-4 p-4 p-md-5 mb-4">
 
 <h1 class="display-5 fw-bold">The Pilots Marketplace</h1>
