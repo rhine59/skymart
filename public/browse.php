@@ -56,9 +56,9 @@ function browse_link(array $params): string {
 </div></div></article>
 <?php else: ?>
 <section class="hero rounded-4 p-4 p-md-5 mb-4">
-<p class="text-uppercase small fw-bold mb-2">The aviation marketplace</p>
-<h1 class="display-5 fw-bold">Find your next aviation adventure</h1>
-<p class="mb-0">Aircraft · Avionics · Parts · Pilot equipment</p></section>
+
+<h1 class="display-5 fw-bold">Aviators marketplace</h1>
+<p class="mb-0">Find, buy and sell all of your aviation needs.</p></section>
 <form class="row g-2 mb-3" method="get" action="browse.php" role="search">
 <div class="col-9 col-md-10"><label for="q" class="visually-hidden">Search adverts</label><input id="q" name="q" class="form-control form-control-lg" value="<?= e($q) ?>" placeholder="Search aircraft, avionics, parts…"><input type="hidden" name="category" value="<?=e($category)?>"></div>
 <div class="col-3 col-md-2"><button class="btn btn-primary btn-lg w-100" type="submit">Search</button></div></form>
