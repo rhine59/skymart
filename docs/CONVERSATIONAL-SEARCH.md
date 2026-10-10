@@ -40,13 +40,13 @@ POST /api/v1/saved-searches/{id}/run
 
 ## Auth decisions
 Browser: existing secure HttpOnly SameSite cookie and CSRF protection, never localStorage token.
-iOS: existing Keychain-stored opaque 30-day token, validate with /api/v1/me; expired token triggers interactive sign-in and then resumes pending operation. Do not invent refresh-token support: add a separately reviewed rotation/refresh design before claiming silent renewal.
-Registration should not bypass any existing email-verification requirements.
+iOS: persist a device-scoped revocable login credential in Keychain with no fixed calendar expiry; validate it with /api/v1/me. Restore authentication silently while valid. If revoked or invalidated, request login and resume the pending operation. Existing 30-day bearer-token implementation must be migrated before claiming this behaviour. Prefer short-lived access credentials plus a rotating, non-calendar-expiring persistent device credential where supported, with replay detection and per-device revocation.
+Authentication credentials are independent of paid advert-duration entitlements: payment determines listing visibility through an explicit paid-until timestamp, never account-login lifetime. Expired paid adverts are hidden from public search but retained for seller renewal. Registration should not bypass any existing email-verification requirements.
 Ensure 401/403 responses distinguish unauthenticated and unauthorized; never expose another user's search.
 
 ## Acceptance tests
 1. Anonymous basic search works; anonymous advanced search redirects to login and resumes after successful login/registration.
-2. Native stored valid token works; expired/revoked token requests login and resumes.
+2. Native valid persistent device credential survives long inactivity; revoked/invalidated credential requests login and resumes.
 3. Refinement add/replace/remove, undo, reset, sorting, pagination and clarification preserve expected state.
 4. Saved search CRUD and rerun work across logout/login and across browser/iOS.
 5. Cross-account access to session or saved-search IDs is denied.
