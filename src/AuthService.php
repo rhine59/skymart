@@ -12,18 +12,18 @@ final class AuthService {
    $hash=password_hash($password,PASSWORD_DEFAULT);$u=$this->db->prepare('UPDATE users SET password=? WHERE id=?');
    $u->bind_param('si',$hash,$user['id']);$u->execute();
   }
-  $token=bin2hex(random_bytes(32));$tokenHash=hash('sha256',$token,true);$expires=(new DateTimeImmutable('+30 days'))->format('Y-m-d H:i:s');
+  $token=bin2hex(random_bytes(32));$tokenHash=hash('sha256',$token,true);$expires=null;
   $insert=$this->db->prepare('INSERT INTO api_tokens(user_id,token_hash,label,expires_at) VALUES(?,?,?,?)');
   $insert->bind_param('ibss',$user['id'],$tokenHash,$label,$expires);
   // mysqli blob binding requires send_long_data for binary token hash.
   $insert->send_long_data(1,$tokenHash);$insert->execute();
-  return ['token'=>$token,'expires_at'=>$expires,'user'=>['id'=>(int)$user['id'],'name'=>$user['name'],'email'=>$user['id']]];
+  return ['token'=>$token,'expires_at'=>$expires,'user'=>['id'=>(int)$user['id'],'name'=>$user['name'],'email'=>$user['email']]];
  }
 
  public function authenticate(string $token): ?array {
   if (!preg_match('/^[a-f0-9]{64}$/',$token)) return null;
   $hash=hash('sha256',$token,true);
-  $stmt=$this->db->prepare("SELECT t.id token_id,u.id,u.name,u.email FROM api_tokens t JOIN users u ON u.id=t.user_id WHERE t.token_hash=? AND u.status='active' AND t.revoked_at IS NULL AND t.expires_at>UTC_TIMESTAMP() LIMIT 1");
+  $stmt=$this->db->prepare("SELECT t.id token_id,u.id,u.name,u.email FROM api_tokens t JOIN users u ON u.id=t.user_id WHERE t.token_hash=? AND u.status='active' AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at>UTC_TIMESTAMP()) LIMIT 1");
   $stmt->bind_param('b',$hash);$stmt->send_long_data(0,$hash);$stmt->execute();$row=$stmt->get_result()->fetch_assoc();
   if (!$row) return null;
   $touch=$this->db->prepare('UPDATE api_tokens SET last_used_at=UTC_TIMESTAMP() WHERE id=? AND (last_used_at IS NULL OR last_used_at<UTC_TIMESTAMP()-INTERVAL 1 HOUR)');
